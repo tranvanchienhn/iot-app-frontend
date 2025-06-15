@@ -1,72 +1,35 @@
-/* Dark Theme Variables */
+/* Theme System */
+
+/* Dark Theme */
 .theme-dark {
-    /* Background Colors */
-    --bg-primary: #121212;
-    --bg-secondary: #1E1E1E;
-    --bg-tertiary: #2D2D2D;
-    --bg-modal: rgba(0, 0, 0, 0.7);
+    --bg-primary: #0F0F0F;
+    --bg-secondary: #1A1A1A;
+    --bg-tertiary: #252525;
+    --bg-card: #1A1A1A;
+    --bg-modal: rgba(0, 0, 0, 0.85);
     
-    /* Text Colors */
     --text-primary: #FFFFFF;
-    --text-secondary: #B3B3B3;
-    --text-tertiary: #666666;
+    --text-secondary: #B8B8B8;
+    --text-tertiary: #737373;
     --text-inverse: #000000;
+    --text-muted: #8A8A8A;
     
-    /* Border Colors */
-    --border-light: #333333;
-    --border-medium: #555555;
-    --border-dark: #777777;
+    --border-light: #2A2A2A;
+    --border-medium: #404040;
+    --border-dark: #525252;
 }
 
-/* Theme-specific Component Styles */
+/* Dark theme specific component adjustments */
 .theme-dark .splash-screen {
     background: linear-gradient(135deg, #1A1A1A, #0D47A1);
 }
 
 .theme-dark .weather-widget {
-    background: linear-gradient(135deg, #263238, #37474F);
+    background: linear-gradient(135deg, #1E3A8A, #1E40AF);
 }
 
 .theme-dark .auth-screen {
     background: var(--bg-primary);
-}
-
-.theme-dark .modal {
-    background: var(--bg-secondary);
-    border: 1px solid var(--border-light);
-}
-
-.theme-dark .device-card,
-.theme-dark .scene-card,
-.theme-dark .summary-card,
-.theme-dark .analytics-card,
-.theme-dark .notification-item,
-.theme-dark .scene-item {
-    background: var(--bg-secondary);
-    border-color: var(--border-light);
-}
-
-.theme-dark .device-card:hover,
-.theme-dark .scene-card:hover {
-    background: var(--bg-tertiary);
-}
-
-.theme-dark .bottom-nav,
-.theme-dark .app-header {
-    background: var(--bg-secondary);
-    border-color: var(--border-light);
-}
-
-.theme-dark .search-input input,
-.theme-dark .form-group input,
-.theme-dark .filter-select {
-    background: var(--bg-secondary);
-    border-color: var(--border-light);
-    color: var(--text-primary);
-}
-
-.theme-dark .tabs {
-    border-bottom-color: var(--border-light);
 }
 
 .theme-dark .period-selector {
@@ -75,35 +38,54 @@
 
 .theme-dark .period-btn.active {
     background: var(--bg-primary);
+    color: var(--primary);
 }
 
-.theme-dark .settings-group {
-    background: var(--bg-secondary);
-    border-color: var(--border-light);
+.theme-dark .mode-btn.active {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
 }
 
-.theme-dark .group-title {
-    background: var(--bg-tertiary);
+.theme-dark .cycle-complete {
+    background: var(--success);
+    color: white;
 }
 
-.theme-dark .setting-item:hover {
-    background: var(--bg-tertiary);
+.theme-dark .notification-item.unread {
+    background: rgba(33, 150, 243, 0.1);
+    border-left-color: var(--primary);
 }
 
 .theme-dark .toast {
-    background: var(--bg-secondary);
+    background: var(--bg-card);
+    border-color: var(--border-light);
+}
+
+.theme-dark .install-prompt {
+    background: var(--bg-card);
     border-color: var(--border-light);
 }
 
 /* High Contrast Theme */
 .theme-high-contrast {
-    --primary: #0066CC;
+    --primary: #0066FF;
+    --secondary: #00AA00;
+    --error: #FF0000;
+    --warning: #FF8800;
+    --success: #00AA00;
+    
     --bg-primary: #FFFFFF;
     --bg-secondary: #F0F0F0;
+    --bg-card: #FFFFFF;
+    
     --text-primary: #000000;
-    --text-secondary: #333333;
+    --text-secondary: #000000;
+    --text-tertiary: #333333;
+    
     --border-light: #000000;
-    --border-medium: #333333;
+    --border-medium: #000000;
+    --border-dark: #000000;
 }
 
 .theme-high-contrast * {
@@ -112,27 +94,64 @@
 
 .theme-high-contrast .btn {
     border: 2px solid currentColor !important;
+    font-weight: 700 !important;
 }
 
-/* Auto Theme (System Preference) */
-@media (prefers-color-scheme: dark) {
-    .theme-auto {
-        /* Apply dark theme variables */
-        --bg-primary: #121212;
-        --bg-secondary: #1E1E1E;
-        --bg-tertiary: #2D2D2D;
-        --bg-modal: rgba(0, 0, 0, 0.7);
-        --text-primary: #FFFFFF;
-        --text-secondary: #B3B3B3;
-        --text-tertiary: #666666;
-        --text-inverse: #000000;
-        --border-light: #333333;
-        --border-medium: #555555;
-        --border-dark: #777777;
-    }
+.theme-high-contrast .device-card,
+.theme-high-contrast .summary-card,
+.theme-high-contrast .analytics-card {
+    border-width: 2px !important;
+    border-color: #000000 !important;
 }
 
-/* Theme Transition */
-* {
-    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+/* Auto Theme (follows system preference) */
+.theme-auto {
+    /* Light theme by default, dark applied via media query */
+}
+
+/* Theme transitions */
+.theme-transition * {
+    transition: background-color 0.3s ease, 
+                color 0.3s ease, 
+                border-color 0.3s ease !important;
+}
+
+/* Custom theme colors for devices */
+.theme-dark .device-status-card.water-heater::before,
+.theme-dark .device-item.water_heater {
+    border-left-color: #60A5FA;
+}
+
+.theme-dark .device-status-card.towel-dryer::before,
+.theme-dark .device-item.towel_dryer {
+    border-left-color: #FBBF24;
+}
+
+/* Theme-aware scrollbars */
+.theme-dark ::-webkit-scrollbar {
+    width: 8px;
+}
+
+.theme-dark ::-webkit-scrollbar-track {
+    background: var(--bg-secondary);
+}
+
+.theme-dark ::-webkit-scrollbar-thumb {
+    background: var(--border-medium);
+    border-radius: 4px;
+}
+
+.theme-dark ::-webkit-scrollbar-thumb:hover {
+    background: var(--border-dark);
+}
+
+/* Theme toggle animation */
+@keyframes theme-switch {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+}
+
+.theme-switching {
+    animation: theme-switch 0.3s ease;
 }

@@ -3,30 +3,51 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SmartHome IoT</title>
+    <title>SmartHome IoT - Bình nước nóng & Máy sấy khăn</title>
+    
+    <!-- Meta tags -->
+    <meta name="description" content="Ứng dụng điều khiển bình nước nóng và máy sấy khăn thông minh">
+    <meta name="keywords" content="smart home, iot, bình nước nóng, máy sấy khăn">
+    <meta name="author" content="SmartHome IoT">
+    
+    <!-- PWA Meta -->
+    <meta name="theme-color" content="#2196F3">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="SmartHome">
+    
+    <!-- Links -->
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" href="favicon.ico">
+    <link rel="apple-touch-icon" href="assets/icons/icon-192x192.png">
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    
+    <!-- Styles -->
     <link rel="stylesheet" href="css/main.css">
     <link rel="stylesheet" href="css/themes.css">
     <link rel="stylesheet" href="css/responsive.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    <meta name="theme-color" content="#2196F3">
-    <link rel="manifest" href="manifest.json">
+    
+    <!-- Preload critical resources -->
+    <link rel="preload" href="js/utils.js" as="script">
+    <link rel="preload" href="js/data.js" as="script">
 </head>
 <body class="theme-light">
     <!-- Splash Screen -->
     <div id="splash-screen" class="splash-screen">
         <div class="splash-content">
             <div class="logo">
-                <span class="material-icons">home</span>
+                <div class="logo-icon">🏠</div>
                 <h1>SmartHome IoT</h1>
+                <p>Bình nước nóng & Máy sấy khăn</p>
             </div>
             <div class="loading">
-                <div class="loading-dots">
-                    <span></span>
-                    <span></span>
-                    <span></span>
-                </div>
-                <p>Đang khởi động...</p>
+                <div class="loading-spinner"></div>
+                <p id="loading-message">Đang khởi động...</p>
             </div>
             <div class="version">Phiên bản 1.2.3</div>
         </div>
@@ -37,26 +58,24 @@
         <!-- Login Screen -->
         <div id="login-screen" class="auth-screen active">
             <div class="auth-header">
-                <button class="back-btn" onclick="goBack()">
-                    <span class="material-icons">arrow_back</span>
-                </button>
                 <h2>Đăng nhập</h2>
             </div>
             <div class="auth-content">
                 <div class="logo-section">
-                    <span class="material-icons">home</span>
+                    <div class="auth-logo">🏠</div>
                     <h3>Chào mừng trở lại!</h3>
+                    <p>Đăng nhập để điều khiển thiết bị của bạn</p>
                 </div>
                 <form class="auth-form" onsubmit="handleLogin(event)">
                     <div class="form-group">
-                        <label>Email hoặc số điện thoại</label>
-                        <input type="text" id="login-email" placeholder="example@email.com" required>
+                        <label for="login-email">Email hoặc số điện thoại</label>
+                        <input type="text" id="login-email" placeholder="example@email.com" required autocomplete="username">
                     </div>
                     <div class="form-group">
-                        <label>Mật khẩu</label>
+                        <label for="login-password">Mật khẩu</label>
                         <div class="password-input">
-                            <input type="password" id="login-password" placeholder="••••••••••" required>
-                            <button type="button" class="toggle-password" onclick="togglePassword('login-password')">
+                            <input type="password" id="login-password" placeholder="••••••••••" required autocomplete="current-password">
+                            <button type="button" class="toggle-password" onclick="togglePassword('login-password')" aria-label="Hiện/Ẩn mật khẩu">
                                 <span class="material-icons">visibility</span>
                             </button>
                         </div>
@@ -65,31 +84,22 @@
                         <label class="checkbox">
                             <input type="checkbox" id="remember-me">
                             <span class="checkmark"></span>
-                            Ghi nhớ đăng nhập
+                            <span>Ghi nhớ đăng nhập</span>
                         </label>
                     </div>
                     <button type="submit" class="btn btn-primary btn-full">Đăng nhập</button>
                 </form>
                 <div class="auth-links">
-                    <a href="#" onclick="showScreen('forgot-password')">Quên mật khẩu?</a>
-                </div>
-                <div class="divider">
-                    <span>HOẶC</span>
-                </div>
-                <button class="btn btn-google" onclick="loginWithGoogle()">
-                    <span class="google-icon">G</span>
-                    Đăng nhập với Google
-                </button>
-                <div class="auth-footer">
-                    <p>Chưa có tài khoản? <a href="#" onclick="showScreen('signup')">Đăng ký</a></p>
+                    <a href="#" onclick="showAuthScreen('signup')">Chưa có tài khoản? Đăng ký</a>
+                    <a href="#" onclick="showAuthScreen('forgot-password')">Quên mật khẩu?</a>
                 </div>
             </div>
         </div>
 
-        <!-- Sign Up Screen -->
+        <!-- Signup Screen -->
         <div id="signup-screen" class="auth-screen">
             <div class="auth-header">
-                <button class="back-btn" onclick="goBack()">
+                <button class="back-btn" onclick="showAuthScreen('login')" aria-label="Quay lại">
                     <span class="material-icons">arrow_back</span>
                 </button>
                 <h2>Tạo tài khoản</h2>
@@ -97,31 +107,37 @@
             <div class="auth-content">
                 <form class="auth-form" onsubmit="handleSignup(event)">
                     <div class="form-group">
-                        <label>Họ và tên</label>
-                        <input type="text" id="signup-name" placeholder="Nguyen Van A" required>
+                        <label for="signup-name">Họ và tên</label>
+                        <input type="text" id="signup-name" placeholder="Nguyen Van A" required autocomplete="name">
                     </div>
                     <div class="form-group">
-                        <label>Email</label>
-                        <input type="email" id="signup-email" placeholder="example@email.com" required>
+                        <label for="signup-email">Email</label>
+                        <input type="email" id="signup-email" placeholder="example@email.com" required autocomplete="email">
                     </div>
                     <div class="form-group">
-                        <label>Số điện thoại</label>
-                        <input type="tel" id="signup-phone" placeholder="+84 901234567" required>
+                        <label for="signup-phone">Số điện thoại</label>
+                        <input type="tel" id="signup-phone" placeholder="+84 901234567" required autocomplete="tel">
                     </div>
                     <div class="form-group">
-                        <label>Mật khẩu</label>
+                        <label for="signup-password">Mật khẩu</label>
                         <div class="password-input">
-                            <input type="password" id="signup-password" placeholder="••••••••••" required>
-                            <button type="button" class="toggle-password" onclick="togglePassword('signup-password')">
+                            <input type="password" id="signup-password" placeholder="••••••••••" required autocomplete="new-password">
+                            <button type="button" class="toggle-password" onclick="togglePassword('signup-password')" aria-label="Hiện/Ẩn mật khẩu">
                                 <span class="material-icons">visibility</span>
                             </button>
                         </div>
+                        <div class="password-strength">
+                            <div class="strength-bar">
+                                <div class="strength-fill" id="password-strength-fill"></div>
+                            </div>
+                            <div class="strength-text" id="password-strength-text">Nhập mật khẩu</div>
+                        </div>
                     </div>
                     <div class="form-group">
-                        <label>Xác nhận mật khẩu</label>
+                        <label for="signup-confirm">Xác nhận mật khẩu</label>
                         <div class="password-input">
-                            <input type="password" id="signup-confirm" placeholder="••••••••••" required>
-                            <button type="button" class="toggle-password" onclick="togglePassword('signup-confirm')">
+                            <input type="password" id="signup-confirm" placeholder="••••••••••" required autocomplete="new-password">
+                            <button type="button" class="toggle-password" onclick="togglePassword('signup-confirm')" aria-label="Hiện/Ẩn mật khẩu">
                                 <span class="material-icons">visibility</span>
                             </button>
                         </div>
@@ -130,76 +146,35 @@
                         <label class="checkbox">
                             <input type="checkbox" id="agree-terms" required>
                             <span class="checkmark"></span>
-                            Tôi đồng ý với <a href="#">Điều khoản</a> và <a href="#">Chính sách bảo mật</a>
+                            <span>Tôi đồng ý với <a href="#" onclick="showTerms()">Điều khoản</a> và <a href="#" onclick="showPrivacy()">Chính sách bảo mật</a></span>
                         </label>
                     </div>
-                    <button type="submit" class="btn btn-primary btn-full">Đăng ký</button>
+                    <button type="submit" class="btn btn-primary btn-full">Tạo tài khoản</button>
                 </form>
-                <div class="auth-footer">
-                    <p>Đã có tài khoản? <a href="#" onclick="showScreen('login')">Đăng nhập</a></p>
-                </div>
             </div>
         </div>
 
         <!-- Forgot Password Screen -->
         <div id="forgot-password-screen" class="auth-screen">
             <div class="auth-header">
-                <button class="back-btn" onclick="goBack()">
+                <button class="back-btn" onclick="showAuthScreen('login')" aria-label="Quay lại">
                     <span class="material-icons">arrow_back</span>
                 </button>
                 <h2>Quên mật khẩu</h2>
             </div>
             <div class="auth-content">
                 <div class="logo-section">
-                    <span class="material-icons">vpn_key</span>
+                    <div class="auth-logo">🔑</div>
                     <h3>Khôi phục mật khẩu</h3>
-                    <p>Nhập email hoặc số điện thoại để nhận mã xác nhận khôi phục</p>
+                    <p>Nhập email để nhận mã xác nhận khôi phục mật khẩu</p>
                 </div>
                 <form class="auth-form" onsubmit="handleForgotPassword(event)">
                     <div class="form-group">
-                        <label>Email hoặc số điện thoại</label>
-                        <input type="text" id="forgot-email" placeholder="example@email.com" required>
+                        <label for="forgot-email">Email</label>
+                        <input type="email" id="forgot-email" placeholder="example@email.com" required autocomplete="email">
                     </div>
                     <button type="submit" class="btn btn-primary btn-full">Gửi mã xác nhận</button>
                 </form>
-                <div class="auth-footer">
-                    <p><a href="#" onclick="showScreen('login')">Quay lại đăng nhập</a></p>
-                </div>
-            </div>
-        </div>
-
-        <!-- OTP Verification Screen -->
-        <div id="otp-screen" class="auth-screen">
-            <div class="auth-header">
-                <button class="back-btn" onclick="goBack()">
-                    <span class="material-icons">arrow_back</span>
-                </button>
-                <h2>Xác nhận mã OTP</h2>
-            </div>
-            <div class="auth-content">
-                <div class="logo-section">
-                    <span class="material-icons">message</span>
-                    <h3>Nhập mã xác nhận</h3>
-                    <p>Mã OTP đã được gửi đến email<br><strong id="otp-email">example@email.com</strong></p>
-                </div>
-                <form class="auth-form" onsubmit="handleOTP(event)">
-                    <div class="otp-inputs">
-                        <input type="text" maxlength="1" class="otp-input" oninput="moveToNext(this, 0)">
-                        <input type="text" maxlength="1" class="otp-input" oninput="moveToNext(this, 1)">
-                        <input type="text" maxlength="1" class="otp-input" oninput="moveToNext(this, 2)">
-                        <input type="text" maxlength="1" class="otp-input" oninput="moveToNext(this, 3)">
-                        <input type="text" maxlength="1" class="otp-input" oninput="moveToNext(this, 4)">
-                        <input type="text" maxlength="1" class="otp-input" oninput="moveToNext(this, 5)">
-                    </div>
-                    <div class="resend-timer">
-                        <p>Gửi lại mã sau <span id="countdown">00:45</span></p>
-                    </div>
-                    <button type="submit" class="btn btn-primary btn-full">Xác nhận</button>
-                </form>
-                <div class="auth-links">
-                    <a href="#" onclick="resendOTP()">Gửi lại mã OTP</a>
-                    <a href="#" onclick="showScreen('forgot-password')">Thay đổi email</a>
-                </div>
             </div>
         </div>
     </div>
@@ -209,17 +184,17 @@
         <!-- Header -->
         <header class="app-header">
             <div class="header-left">
-                <div class="home-selector" onclick="showHomeSelector()">
-                    <span id="current-home-name">Nhà của Anh</span>
+                <div class="home-selector" onclick="showHomeSelector()" role="button" tabindex="0">
+                    <span id="current-home-name">Nhà riêng</span>
                     <span class="material-icons">keyboard_arrow_down</span>
                 </div>
             </div>
             <div class="header-right">
-                <button class="header-btn" onclick="showNotifications()">
+                <button class="header-btn" onclick="showNotifications()" aria-label="Thông báo">
                     <span class="material-icons">notifications</span>
-                    <span class="badge" id="notification-badge">3</span>
+                    <span class="badge hidden" id="notification-badge">0</span>
                 </button>
-                <button class="header-btn voice-btn" onclick="startVoiceControl()">
+                <button class="header-btn voice-btn" onclick="startVoiceControl()" aria-label="Điều khiển giọng nói">
                     <span class="material-icons">mic</span>
                 </button>
             </div>
@@ -241,220 +216,90 @@
                     </div>
                 </div>
 
-                <!-- Favorite Devices -->
+                <!-- Device Status Cards -->
                 <section class="section">
-                    <h3 class="section-title">Thiết bị yêu thích</h3>
-                    <div class="device-grid" id="favorite-devices">
+                    <h3 class="section-title">Thiết bị của bạn</h3>
+                    <div class="device-status-grid" id="device-status-cards">
                         <!-- Devices will be populated by JS -->
                     </div>
                 </section>
 
-                <!-- Quick Scenes -->
+                <!-- Quick Actions -->
                 <section class="section">
-                    <h3 class="section-title">Kịch bản nhanh</h3>
-                    <div class="scene-grid" id="quick-scenes">
-                        <!-- Scenes will be populated by JS -->
+                    <h3 class="section-title">Thao tác nhanh</h3>
+                    <div class="quick-actions-grid">
+                        <button class="quick-action-btn" onclick="quickHeatWater(45)" data-action="heat-water">
+                            <span class="action-icon">🚿</span>
+                            <span class="action-text">Đun nước 45°C</span>
+                        </button>
+                        <button class="quick-action-btn" onclick="quickStartTowelDrying()" data-action="towel-dry">
+                            <span class="action-icon">👕</span>
+                            <span class="action-text">Sấy khăn</span>
+                        </button>
+                        <button class="quick-action-btn" onclick="quickStartRoomHeating()" data-action="room-heat">
+                            <span class="action-icon">🔥</span>
+                            <span class="action-text">Sưởi phòng</span>
+                        </button>
+                        <button class="quick-action-btn" onclick="runPresetScene('bath-ready')" data-action="bath-scene">
+                            <span class="action-icon">🛀</span>
+                            <span class="action-text">Chuẩn bị tắm</span>
+                        </button>
                     </div>
                 </section>
 
                 <!-- Today's Summary -->
                 <section class="section">
-                    <h3 class="section-title">Hôm nay</h3>
-                    <div class="summary-cards">
-                        <div class="summary-card">
-                            <span class="material-icons">bolt</span>
-                            <div class="summary-info">
-                                <div class="summary-label">Điện năng</div>
-                                <div class="summary-value">45.2 kWh</div>
-                            </div>
-                        </div>
-                        <div class="summary-card">
-                            <span class="material-icons">attach_money</span>
-                            <div class="summary-info">
-                                <div class="summary-label">Chi phí</div>
-                                <div class="summary-value">~135,000 VNĐ</div>
-                            </div>
-                        </div>
-                        <div class="summary-card trend-up">
-                            <span class="material-icons">trending_up</span>
-                            <div class="summary-info">
-                                <div class="summary-label">So với hôm qua</div>
-                                <div class="summary-value">+12%</div>
-                            </div>
-                        </div>
+                    <h3 class="section-title">Tổng quan hôm nay</h3>
+                    <div class="summary-cards" id="summary-cards">
+                        <!-- Summary will be populated by JS -->
                     </div>
                 </section>
             </div>
 
-            <!-- Device List Screen -->
+            <!-- Devices Screen -->
             <div id="devices-screen" class="screen">
                 <div class="screen-header">
                     <h2>Thiết bị</h2>
                     <div class="header-actions">
-                        <button class="header-btn" onclick="showDeviceSearch()">
-                            <span class="material-icons">search</span>
-                        </button>
-                        <button class="header-btn" onclick="showDeviceSettings()">
-                            <span class="material-icons">settings</span>
+                        <button class="header-btn" onclick="refreshDevices()" aria-label="Làm mới">
+                            <span class="material-icons">refresh</span>
                         </button>
                     </div>
                 </div>
 
-                <!-- Search Bar -->
-                <div class="search-bar" id="device-search" style="display: none;">
-                    <div class="search-input">
-                        <span class="material-icons">search</span>
-                        <input type="text" placeholder="Tìm thiết bị..." oninput="filterDevices(this.value)">
-                    </div>
-                </div>
-
-                <!-- Filter Bar -->
-                <div class="filter-bar">
-                    <select class="filter-select" onchange="filterByRoom(this.value)">
-                        <option value="">📍 Tất cả phòng</option>
-                        <option value="living-room">🛋️ Phòng khách</option>
-                        <option value="bedroom">🛏️ Phòng ngủ</option>
-                        <option value="kitchen">🍳 Nhà bếp</option>
-                        <option value="bathroom">🚿 Phòng tắm</option>
-                    </select>
-                    <select class="filter-select" onchange="filterByType(this.value)">
-                        <option value="">🔧 Tất cả loại</option>
-                        <option value="light">💡 Đèn</option>
-                        <option value="ac">❄️ Điều hòa</option>
-                        <option value="tv">📺 TV</option>
-                        <option value="socket">🔌 Ổ cắm</option>
-                        <option value="water_heater">🔥 Bình nóng lạnh</option>
-                        <option value="towel_dryer">🧻 Máy sấy khăn</option>
-                    </select>
-                </div>
-
-                <!-- Device List -->
                 <div class="device-list" id="device-list">
                     <!-- Devices will be populated by JS -->
-                </div>
-
-                <!-- Add Device Button -->
-                <button class="fab" onclick="showAddDevice()">
-                    <span class="material-icons">add</span>
-                </button>
-            </div>
-
-            <!-- Scenes Screen -->
-            <div id="scenes-screen" class="screen">
-                <div class="screen-header">
-                    <h2>Kịch bản thông minh</h2>
-                    <div class="header-actions">
-                        <button class="header-btn" onclick="showSceneSearch()">
-                            <span class="material-icons">search</span>
-                        </button>
-                        <button class="header-btn" onclick="showAddScene()">
-                            <span class="material-icons">add</span>
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Search Bar -->
-                <div class="search-bar" id="scene-search" style="display: none;">
-                    <div class="search-input">
-                        <span class="material-icons">search</span>
-                        <input type="text" placeholder="Tìm kịch bản..." oninput="filterScenes(this.value)">
-                    </div>
-                </div>
-
-                <!-- Scene Tabs -->
-                <div class="tabs">
-                    <button class="tab active" onclick="showSceneTab('my-scenes')">Kịch bản của tôi</button>
-                    <button class="tab" onclick="showSceneTab('ai-suggestions')">Gợi ý AI</button>
-                    <button class="tab" onclick="showSceneTab('automation-rules')">Quy tắc tự động</button>
-                </div>
-
-                <!-- My Scenes Tab -->
-                <div id="my-scenes-tab" class="tab-content active">
-                    <div class="scene-list" id="scene-list">
-                        <!-- Scenes will be populated by JS -->
-                    </div>
-                </div>
-
-                <!-- AI Suggestions Tab -->
-                <div id="ai-suggestions-tab" class="tab-content">
-                    <div class="ai-suggestions" id="ai-suggestions">
-                        <!-- AI suggestions will be populated by JS -->
-                    </div>
-                </div>
-
-                <!-- Automation Rules Tab -->
-                <div id="automation-rules-tab" class="tab-content">
-                    <div class="automation-rules-list" id="automation-rules-list">
-                        <!-- Automation rules will be populated by JS -->
-                    </div>
                 </div>
             </div>
 
             <!-- Analytics Screen -->
             <div id="analytics-screen" class="screen">
                 <div class="screen-header">
-                    <h2>Thống kê điện năng</h2>
-                    <div class="header-actions">
-                        <button class="header-btn" onclick="showAnalyticsChart()">
-                            <span class="material-icons">bar_chart</span>
-                        </button>
-                        <button class="header-btn" onclick="showAnalyticsSettings()">
-                            <span class="material-icons">settings</span>
-                        </button>
-                    </div>
+                    <h2>Thống kê năng lượng</h2>
                 </div>
 
                 <!-- Period Selector -->
                 <div class="period-selector">
-                    <button class="period-btn active" onclick="setPeriod('today')">Hôm nay</button>
-                    <button class="period-btn" onclick="setPeriod('week')">Tuần</button>
-                    <button class="period-btn" onclick="setPeriod('month')">Tháng</button>
-                    <button class="period-btn" onclick="setPeriod('year')">Năm</button>
+                    <button class="period-btn active" onclick="setPeriod('today')" data-period="today">Hôm nay</button>
+                    <button class="period-btn" onclick="setPeriod('week')" data-period="week">Tuần</button>
+                    <button class="period-btn" onclick="setPeriod('month')" data-period="month">Tháng</button>
                 </div>
 
-                <!-- Overview Cards -->
-                <div class="analytics-overview">
-                    <div class="analytics-card">
-                        <div class="analytics-icon">⚡</div>
-                        <div class="analytics-info">
-                            <div class="analytics-value">45.2 kWh</div>
-                            <div class="analytics-label">Tổng tiêu thụ</div>
-                        </div>
-                    </div>
-                    <div class="analytics-card">
-                        <div class="analytics-icon">💰</div>
-                        <div class="analytics-info">
-                            <div class="analytics-value">135,000 VNĐ</div>
-                            <div class="analytics-label">Chi phí</div>
-                        </div>
-                    </div>
-                    <div class="analytics-card trend">
-                        <div class="analytics-icon">📈</div>
-                        <div class="analytics-info">
-                            <div class="analytics-value">+12%</div>
-                            <div class="analytics-label">So với hôm qua</div>
-                        </div>
-                    </div>
+                <!-- Analytics Overview -->
+                <div class="analytics-overview" id="analytics-overview">
+                    <!-- Analytics will be populated by JS -->
                 </div>
 
                 <!-- Chart Container -->
                 <div class="chart-container">
-                    <canvas id="energy-chart"></canvas>
+                    <canvas id="energy-chart" width="400" height="200"></canvas>
                 </div>
 
-                <!-- Top Devices -->
+                <!-- Device Analytics -->
                 <section class="section">
-                    <h3 class="section-title">Top thiết bị tiêu thụ</h3>
-                    <div class="top-devices" id="top-devices">
-                        <!-- Top devices will be populated by JS -->
-                    </div>
-                </section>
-
-                <!-- Recommendations -->
-                <section class="section">
-                    <h3 class="section-title">Đề xuất tiết kiệm</h3>
-                    <div class="recommendations" id="recommendations">
-                        <!-- Recommendations will be populated by JS -->
+                    <h3 class="section-title">Thiết bị tiêu thụ nhiều nhất</h3>
+                    <div class="device-analytics" id="device-analytics">
+                        <!-- Device analytics will be populated by JS -->
                     </div>
                 </section>
             </div>
@@ -468,1291 +313,210 @@
                 <!-- Profile Section -->
                 <div class="profile-section">
                     <div class="profile-info">
-                        <div class="profile-avatar">
+                        <div class="profile-avatar" id="profile-avatar">
                             <span class="material-icons">person</span>
                         </div>
                         <div class="profile-details">
-                            <div class="profile-name">Nguyễn Văn A</div>
-                            <div class="profile-email">user@example.com</div>
+                            <div class="profile-name" id="profile-name">Người dùng</div>
+                            <div class="profile-email" id="profile-email">user@example.com</div>
                         </div>
                     </div>
-                    <button class="btn btn-outline" onclick="editProfile()">Chỉnh sửa hồ sơ</button>
                 </div>
 
                 <!-- Settings Groups -->
                 <div class="settings-groups">
                     <div class="settings-group">
-                        <h4 class="group-title">Tài khoản</h4>
-                        <div class="setting-item" onclick="changePassword()">
-                            <span class="material-icons">lock</span>
-                            <span class="setting-label">Đổi mật khẩu</span>
+                        <h4 class="group-title">Thiết bị & Hệ thống</h4>
+                        <div class="setting-item" onclick="showDeviceSettings()">
+                            <span class="material-icons">devices</span>
+                            <span class="setting-label">Quản lý thiết bị</span>
                             <span class="material-icons">chevron_right</span>
                         </div>
-                        <div class="setting-item" onclick="showSecurity()">
-                            <span class="material-icons">security</span>
-                            <span class="setting-label">Bảo mật 2 lớp</span>
-                            <span class="material-icons">chevron_right</span>
-                        </div>
-                        <div class="setting-item" onclick="showBackup()">
-                            <span class="material-icons">backup</span>
-                            <span class="setting-label">Sao lưu & khôi phục</span>
-                            <span class="material-icons">chevron_right</span>
-                        </div>
-                    </div>
-
-                    <div class="settings-group">
-                        <h4 class="group-title">Hệ thống</h4>
-                        <div class="setting-item" onclick="manageHomes()">
-                            <span class="material-icons">home</span>
-                            <span class="setting-label">Quản lý nhà & phòng</span>
-                            <span class="material-icons">chevron_right</span>
-                        </div>
-                        <div class="setting-item" onclick="notificationSettings()">
+                        <div class="setting-item" onclick="showNotificationSettings()">
                             <span class="material-icons">notifications</span>
-                            <span class="setting-label">Cài đặt thông báo</span>
+                            <span class="setting-label">Thông báo</span>
                             <span class="material-icons">chevron_right</span>
                         </div>
-                        <div class="setting-item" onclick="themeSettings()">
-                            <span class="material-icons">palette</span>
-                            <span class="setting-label">Giao diện sáng/tối</span>
-                            <span class="material-icons">chevron_right</span>
-                        </div>
-                        <div class="setting-item" onclick="languageSettings()">
-                            <span class="material-icons">language</span>
-                            <span class="setting-label">Ngôn ngữ</span>
-                            <span class="material-icons">chevron_right</span>
-                        </div>
-                    </div>
-
-                    <div class="settings-group">
-                        <h4 class="group-title">Tự động hóa</h4>
-                        <div class="setting-item" onclick="showAutomationRules()">
-                            <span class="material-icons">smart_toy</span>
-                            <span class="setting-label">Quy tắc tự động</span>
-                            <span class="material-icons">chevron_right</span>
-                        </div>
-                        <div class="setting-item" onclick="showSmartSuggestions()">
-                            <span class="material-icons">lightbulb</span>
-                            <span class="setting-label">Gợi ý thông minh</span>
-                            <span class="material-icons">chevron_right</span>
-                        </div>
-                        <div class="setting-item" onclick="showEnergyOptimization()">
-                            <span class="material-icons">eco</span>
-                            <span class="setting-label">Tối ưu hóa năng lượng</span>
-                            <span class="material-icons">chevron_right</span>
-                        </div>
-                        <div class="setting-item" onclick="showDeviceSchedules()">
-                            <span class="material-icons">schedule</span>
-                            <span class="setting-label">Lịch trình thiết bị</span>
-                            <span class="material-icons">chevron_right</span>
-                        </div>
-                    </div>
-
-                    <div class="settings-group">
-                        <h4 class="group-title">Quản lý thiết bị</h4>
-                        <div class="setting-item" onclick="showDeviceHealth()">
-                            <span class="material-icons">health_and_safety</span>
-                            <span class="setting-label">Tình trạng thiết bị</span>
-                            <span class="material-icons">chevron_right</span>
-                        </div>
-                        <div class="setting-item" onclick="showMaintenanceSchedule()">
-                            <span class="material-icons">build</span>
-                            <span class="setting-label">Lịch bảo trì</span>
-                            <span class="material-icons">chevron_right</span>
-                        </div>
-                        <div class="setting-item" onclick="showEnergyReports()">
-                            <span class="material-icons">assessment</span>
-                            <span class="setting-label">Báo cáo năng lượng</span>
-                            <span class="material-icons">chevron_right</span>
-                        </div>
-                    </div>
-
-                    <div class="settings-group">
-                        <h4 class="group-title">Tích hợp</h4>
-                        <div class="setting-item" onclick="voiceSettings()">
+                        <div class="setting-item" onclick="showVoiceSettings()">
                             <span class="material-icons">mic</span>
                             <span class="setting-label">Điều khiển giọng nói</span>
                             <span class="material-icons">chevron_right</span>
                         </div>
-                        <div class="setting-item" onclick="otaSettings()">
-                            <span class="material-icons">system_update</span>
-                            <span class="setting-label">Cập nhật OTA</span>
+                    </div>
+
+                    <div class="settings-group">
+                        <h4 class="group-title">Giao diện</h4>
+                        <div class="setting-item" onclick="showThemeSettings()">
+                            <span class="material-icons">palette</span>
+                            <span class="setting-label">Chế độ sáng/tối</span>
+                            <div class="setting-value">
+                                <select id="theme-selector" onchange="changeTheme(this.value)">
+                                    <option value="light">Sáng</option>
+                                    <option value="dark">Tối</option>
+                                    <option value="auto">Tự động</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="setting-item" onclick="showLanguageSettings()">
+                            <span class="material-icons">language</span>
+                            <span class="setting-label">Ngôn ngữ</span>
+                            <span class="setting-value">Tiếng Việt</span>
+                        </div>
+                    </div>
+
+                    <div class="settings-group">
+                        <h4 class="group-title">Hỗ trợ</h4>
+                        <div class="setting-item" onclick="showHelp()">
+                            <span class="material-icons">help</span>
+                            <span class="setting-label">Hướng dẫn</span>
+                            <span class="material-icons">chevron_right</span>
+                        </div>
+                        <div class="setting-item" onclick="showAbout()">
+                            <span class="material-icons">info</span>
+                            <span class="setting-label">Về ứng dụng</span>
                             <span class="material-icons">chevron_right</span>
                         </div>
                     </div>
                 </div>
 
-                <!-- Logout Button -->
-                <button class="btn btn-danger btn-full logout-btn" onclick="logout()">
-                    Đăng xuất
-                </button>
-
-                <!-- Version Info -->
-                <div class="version-info">
-                    Phiên bản 1.2.3 (Build 456)
+                <!-- Version & Logout -->
+                <div class="settings-footer">
+                    <div class="version-info">Phiên bản 1.2.3</div>
+                    <button class="btn btn-danger btn-full" onclick="logout()">
+                        Đăng xuất
+                    </button>
                 </div>
             </div>
         </main>
 
         <!-- Bottom Navigation -->
-        <nav class="bottom-nav">
-            <button class="nav-item active" onclick="showScreen('home')">
+        <nav class="bottom-nav" role="navigation">
+            <button class="nav-item active" onclick="showScreen('home')" data-screen="home" aria-label="Trang chủ">
                 <span class="material-icons">home</span>
                 <span class="nav-label">Trang chủ</span>
             </button>
-            <button class="nav-item" onclick="showScreen('devices')">
+            <button class="nav-item" onclick="showScreen('devices')" data-screen="devices" aria-label="Thiết bị">
                 <span class="material-icons">devices</span>
                 <span class="nav-label">Thiết bị</span>
             </button>
-            <button class="nav-item" onclick="showScreen('scenes')">
-                <span class="material-icons">movie</span>
-                <span class="nav-label">Kịch bản</span>
-            </button>
-            <button class="nav-item" onclick="showScreen('analytics')">
+            <button class="nav-item" onclick="showScreen('analytics')" data-screen="analytics" aria-label="Thống kê">
                 <span class="material-icons">analytics</span>
                 <span class="nav-label">Thống kê</span>
             </button>
-            <button class="nav-item" onclick="showScreen('settings')">
+            <button class="nav-item" onclick="showScreen('settings')" data-screen="settings" aria-label="Cài đặt">
                 <span class="material-icons">settings</span>
                 <span class="nav-label">Cài đặt</span>
             </button>
         </nav>
     </div>
 
-    <!-- Modals and Overlays -->
-    <div id="modal-overlay" class="modal-overlay">
+    <!-- Modal Overlay -->
+    <div id="modal-overlay" class="modal-overlay" onclick="closeModalOnOverlayClick(event)">
         <!-- Device Control Modal -->
         <div id="device-control-modal" class="modal">
             <div class="modal-header">
-                <button class="back-btn" onclick="closeModal()">
-                    <span class="material-icons">arrow_back</span>
+                <button class="back-btn" onclick="closeModal()" aria-label="Đóng">
+                    <span class="material-icons">close</span>
                 </button>
                 <h3 id="device-control-title">Điều khiển thiết bị</h3>
-                <button class="header-btn" onclick="showDeviceSettings()">
-                    <span class="material-icons">settings</span>
+                <button class="header-btn" onclick="showDeviceOptions()" aria-label="Tùy chọn">
+                    <span class="material-icons">more_vert</span>
                 </button>
             </div>
             <div class="modal-content" id="device-control-content">
-               <!-- Content will be populated by JS -->
-           </div>
-       </div>
-
-       <!-- Add Device Modal -->
-       <div id="add-device-modal" class="modal">
-           <div class="modal-header">
-               <button class="back-btn" onclick="closeModal()">
-                   <span class="material-icons">arrow_back</span>
-               </button>
-               <h3>Thêm thiết bị mới</h3>
-           </div>
-           <div class="modal-content">
-               <div class="add-device-methods">
-                   <div class="method-card">
-                       <div class="qr-scanner">
-                           <span class="material-icons">qr_code_scanner</span>
-                           <h4>Quét mã QR thiết bị</h4>
-                           <p>Đưa camera về phía mã QR</p>
-                       </div>
-                       <button class="btn btn-primary" onclick="startQRScan()">Bắt đầu quét</button>
-                   </div>
-                   
-                   <div class="divider"><span>HOẶC</span></div>
-                   
-                   <div class="form-group">
-                       <label>Nhập mã thiết bị</label>
-                       <input type="text" placeholder="ABC123DEF456" id="device-code">
-                   </div>
-                   
-                   <div class="divider"><span>HOẶC</span></div>
-                   
-                   <div class="nearby-devices">
-                       <h4>Tìm thiết bị gần đó</h4>
-                       <div class="scanning-status">
-                           <span class="material-icons spin">refresh</span>
-                           <span>Đang quét...</span>
-                       </div>
-                       <div class="nearby-list" id="nearby-devices-list">
-                           <!-- Nearby devices will be populated by JS -->
-                       </div>
-                   </div>
-                   
-                   <button class="btn btn-outline btn-full" onclick="refreshNearbyDevices()">
-                       Làm mới
-                   </button>
-               </div>
-           </div>
-       </div>
-
-       <!-- Notifications Modal -->
-       <div id="notifications-modal" class="modal">
-           <div class="modal-header">
-               <button class="back-btn" onclick="closeModal()">
-                   <span class="material-icons">arrow_back</span>
-               </button>
-               <h3>Thông báo</h3>
-               <div class="header-actions">
-                   <button class="header-btn" onclick="searchNotifications()">
-                       <span class="material-icons">search</span>
-                   </button>
-                   <button class="header-btn" onclick="notificationSettings()">
-                       <span class="material-icons">settings</span>
-                   </button>
-                   <button class="header-btn" onclick="clearAllNotifications()">
-                       <span class="material-icons">delete</span>
-                   </button>
-               </div>
-           </div>
-           <div class="modal-content">
-               <!-- Notification Filters -->
-               <div class="notification-filters">
-                   <button class="filter-btn active" onclick="filterNotifications('all')">Tất cả</button>
-                   <button class="filter-btn" onclick="filterNotifications('warning')">⚠️ Cảnh báo</button>
-                   <button class="filter-btn" onclick="filterNotifications('info')">ℹ️ Thông tin</button>
-                   <button class="filter-btn" onclick="filterNotifications('success')">✅ Thành công</button>
-               </div>
-               
-               <!-- Notifications List -->
-               <div class="notifications-list" id="notifications-list">
-                   <!-- Notifications will be populated by JS -->
-               </div>
-           </div>
-       </div>
-
-       <!-- Automation Rules Modal -->
-       <div id="automation-rules-modal" class="modal">
-           <div class="modal-header">
-               <button class="back-btn" onclick="closeModal()">
-                   <span class="material-icons">arrow_back</span>
-               </button>
-               <h3>Quy tắc tự động</h3>
-               <div class="header-actions">
-                   <button class="header-btn" onclick="addAutomationRule()">
-                       <span class="material-icons">add</span>
-                   </button>
-               </div>
-           </div>
-           <div class="modal-content">
-               <div class="automation-rules-list" id="automation-rules-modal-list">
-                   <!-- Automation rules will be populated by JS -->
-               </div>
-           </div>
-       </div>
-
-       <!-- Energy Optimization Modal -->
-       <div id="energy-optimization-modal" class="modal">
-           <div class="modal-header">
-               <button class="back-btn" onclick="closeModal()">
-                   <span class="material-icons">arrow_back</span>
-               </button>
-               <h3>Tối ưu hóa năng lượng</h3>
-           </div>
-           <div class="modal-content">
-               <div class="optimization-summary">
-                   <div class="summary-card">
-                       <span class="material-icons">eco</span>
-                       <div class="summary-info">
-                           <div class="summary-value" id="potential-savings">25%</div>
-                           <div class="summary-label">Tiết kiệm dự kiến</div>
-                       </div>
-                   </div>
-               </div>
-               
-               <div class="optimization-recommendations" id="optimization-recommendations">
-                   <!-- Recommendations will be populated by JS -->
-               </div>
-               
-               <div class="optimization-actions">
-                   <button class="btn btn-primary btn-full" onclick="applyAllOptimizations()">
-                       Áp dụng tất cả tối ưu hóa
-                   </button>
-               </div>
-           </div>
-       </div>
-
-       <!-- Device Timer Modal -->
-       <div id="device-timer-modal" class="modal">
-           <div class="modal-header">
-               <button class="back-btn" onclick="closeModal()">
-                   <span class="material-icons">arrow_back</span>
-               </button>
-               <h3>Hẹn giờ thiết bị</h3>
-           </div>
-           <div class="modal-content">
-               <div class="timer-setup">
-                   <div class="form-group">
-                       <label>Thời gian (phút)</label>
-                       <input type="number" id="timer-minutes" min="1" max="1440" value="30" placeholder="30">
-                   </div>
-                   <div class="form-group">
-                       <label>Hành động khi hết giờ</label>
-                       <select id="timer-action">
-                           <option value="turn_off">Tắt thiết bị</option>
-                           <option value="turn_on">Bật thiết bị</option>
-                           <option value="notify_only">Chỉ thông báo</option>
-                       </select>
-                   </div>
-                   <div class="timer-actions">
-                       <button class="btn btn-primary btn-full" onclick="setDeviceTimerFromModal()">
-                           Đặt hẹn giờ
-                       </button>
-                       <button class="btn btn-outline btn-full" onclick="cancelDeviceTimerFromModal()">
-                           Hủy hẹn giờ
-                       </button>
-                   </div>
-               </div>
-           </div>
-       </div>
-
-       <!-- Device Schedule Modal -->
-       <div id="device-schedule-modal" class="modal">
-           <div class="modal-header">
-               <button class="back-btn" onclick="closeModal()">
-                   <span class="material-icons">arrow_back</span>
-               </button>
-               <h3>Lịch trình thiết bị</h3>
-           </div>
-           <div class="modal-content">
-               <div class="schedule-setup">
-                   <div class="form-group">
-                       <label>Tên lịch trình</label>
-                       <input type="text" id="schedule-name" placeholder="Lịch trình mới">
-                   </div>
-                   <div class="schedule-rules" id="schedule-rules">
-                       <!-- Schedule rules will be added dynamically -->
-                   </div>
-                   <button class="btn btn-outline" onclick="addScheduleRule()">
-                       <span class="material-icons">add</span>
-                       Thêm quy tắc
-                   </button>
-                   <div class="schedule-actions">
-                       <button class="btn btn-primary btn-full" onclick="saveDeviceSchedule()">
-                           Lưu lịch trình
-                       </button>
-                   </div>
-               </div>
-           </div>
-       </div>
-
-       <!-- Loading Modal -->
-       <div id="loading-modal" class="modal loading-modal">
-           <div class="loading-content">
-               <div class="spinner"></div>
-               <p id="loading-text">Đang xử lý...</p>
-           </div>
-       </div>
-
-       <!-- Confirmation Modal -->
-       <div id="confirmation-modal" class="modal confirmation-modal">
-           <div class="modal-content">
-               <div class="confirmation-icon">
-                   <span class="material-icons" id="confirmation-icon">warning</span>
-               </div>
-               <h3 id="confirmation-title">Xác nhận</h3>
-               <p id="confirmation-message">Bạn có chắc chắn muốn thực hiện hành động này?</p>
-               <div class="confirmation-actions">
-                   <button class="btn btn-outline" onclick="closeModal()">Hủy bỏ</button>
-                   <button class="btn btn-primary" id="confirmation-confirm" onclick="confirmAction()">Xác nhận</button>
-               </div>
-           </div>
-       </div>
-   </div>
-
-   <!-- Toast Notifications -->
-   <div id="toast-container" class="toast-container"></div>
-
-   <!-- Voice Control Overlay -->
-   <div id="voice-overlay" class="voice-overlay">
-       <div class="voice-content">
-           <div class="voice-animation">
-               <div class="voice-circle"></div>
-               <div class="voice-circle"></div>
-               <div class="voice-circle"></div>
-           </div>
-           <h3>Đang nghe...</h3>
-           <p id="voice-transcript">Hãy nói lệnh của bạn</p>
-           <button class="btn btn-outline" onclick="stopVoiceControl()">Dừng</button>
-       </div>
-   </div>
-
-   <!-- PWA Install Prompt -->
-   <div id="install-prompt" class="install-prompt">
-       <div class="install-content">
-           <span class="material-icons">get_app</span>
-           <div class="install-text">
-               <h4>Cài đặt SmartHome IoT</h4>
-               <p>Truy cập nhanh hơn từ màn hình chính</p>
-           </div>
-           <button class="btn btn-primary btn-sm" onclick="installPWA()">Cài đặt</button>
-           <button class="btn btn-text btn-sm" onclick="dismissInstall()">Bỏ qua</button>
-       </div>
-   </div>
-
-   <!-- Scripts -->
-   <script src="js/utils.js"></script>
-   <script src="js/data.js"></script>
-   <script src="js/components.js"></script>
-   <script src="js/app.js"></script>
- <!-- Edit Profile Modal -->
-<div id="edit-profile-modal" class="modal">
-    <div class="modal-header">
-        <button class="back-btn" onclick="closeModal()">
-            <span class="material-icons">arrow_back</span>
-        </button>
-        <h3>Chỉnh sửa hồ sơ</h3>
-    </div>
-    <div class="modal-content">
-        <div class="form-group">
-            <label>Họ và tên</label>
-            <input type="text" id="edit-name" placeholder="Nguyễn Văn A">
+                <!-- Content will be populated by JS -->
+            </div>
         </div>
-        <div class="form-group">
-            <label>Email</label>
-            <input type="email" id="edit-email" placeholder="user@example.com">
-        </div>
-        <div class="form-group">
-            <label>Số điện thoại</label>
-            <input type="tel" id="edit-phone" placeholder="+84901234567">
-        </div>
-        <div class="form-group">
-            <label>Ảnh đại diện</label>
-            <input type="file" id="edit-avatar" accept="image/*">
-        </div>
-        <button class="btn btn-primary btn-full" onclick="saveProfile()">Lưu thay đổi</button>
-    </div>
-</div>
 
-<!-- Change Password Modal -->
-<div id="change-password-modal" class="modal">
-    <div class="modal-header">
-        <button class="back-btn" onclick="closeModal()">
-            <span class="material-icons">arrow_back</span>
-        </button>
-        <h3>Đổi mật khẩu</h3>
-    </div>
-    <div class="modal-content">
-        <div class="form-group">
-            <label>Mật khẩu hiện tại</label>
-            <div class="password-input">
-                <input type="password" id="current-password" placeholder="••••••••••">
-                <button type="button" class="toggle-password" onclick="togglePassword('current-password')">
-                    <span class="material-icons">visibility</span>
+        <!-- Notifications Modal -->
+        <div id="notifications-modal" class="modal">
+            <div class="modal-header">
+                <button class="back-btn" onclick="closeModal()" aria-label="Đóng">
+                    <span class="material-icons">close</span>
+                </button>
+                <h3>Thông báo</h3>
+                <button class="header-btn" onclick="clearAllNotifications()" aria-label="Xóa tất cả">
+                    <span class="material-icons">clear_all</span>
                 </button>
             </div>
-        </div>
-        <div class="form-group">
-            <label>Mật khẩu mới</label>
-            <div class="password-input">
-                <input type="password" id="new-password" placeholder="••••••••••">
-                <button type="button" class="toggle-password" onclick="togglePassword('new-password')">
-                    <span class="material-icons">visibility</span>
-                </button>
+            <div class="modal-content">
+                <div class="notifications-list" id="notifications-list">
+                    <!-- Notifications will be populated by JS -->
+                </div>
             </div>
         </div>
-        <div class="form-group">
-            <label>Xác nhận mật khẩu mới</label>
-            <div class="password-input">
-                <input type="password" id="confirm-password" placeholder="••••••••••">
-                <button type="button" class="toggle-password" onclick="togglePassword('confirm-password')">
-                    <span class="material-icons">visibility</span>
-                </button>
-            </div>
-        </div>
-        <button class="btn btn-primary btn-full" onclick="changePasswordSubmit()">Đổi mật khẩu</button>
-    </div>
-</div>
 
-<!-- Theme Settings Modal -->
-<div id="theme-settings-modal" class="modal">
-    <div class="modal-header">
-        <button class="back-btn" onclick="closeModal()">
-            <span class="material-icons">arrow_back</span>
-        </button>
-        <h3>Cài đặt giao diện</h3>
-    </div>
-    <div class="modal-content">
-        <div class="theme-options">
-            <div class="theme-option" onclick="setTheme('light')">
-                <div class="theme-preview theme-preview-light"></div>
-                <div class="theme-info">
-                    <h4>Sáng</h4>
-                    <p>Giao diện sáng, dễ nhìn ban ngày</p>
-                </div>
-                <span class="material-icons theme-check">check_circle</span>
+        <!-- Loading Modal -->
+        <div id="loading-modal" class="modal loading-modal">
+            <div class="loading-content">
+                <div class="loading-spinner large"></div>
+                <p id="loading-text">Đang xử lý...</p>
             </div>
-            
-            <div class="theme-option" onclick="setTheme('dark')">
-                <div class="theme-preview theme-preview-dark"></div>
-                <div class="theme-info">
-                    <h4>Tối</h4>
-                    <p>Giao diện tối, dễ chịu cho mắt</p>
+        </div>
+
+        <!-- Confirmation Modal -->
+        <div id="confirmation-modal" class="modal confirmation-modal">
+            <div class="confirmation-content">
+                <div class="confirmation-icon" id="confirmation-icon">
+                    <span class="material-icons">help</span>
                 </div>
-                <span class="material-icons theme-check">check_circle</span>
-            </div>
-            
-            <div class="theme-option" onclick="setTheme('auto')">
-                <div class="theme-preview theme-preview-auto"></div>
-                <div class="theme-info">
-                    <h4>Tự động</h4>
-                    <p>Theo cài đặt hệ thống</p>
+                <h3 id="confirmation-title">Xác nhận</h3>
+                <p id="confirmation-message">Bạn có chắc chắn muốn thực hiện hành động này?</p>
+                <div class="confirmation-actions">
+                    <button class="btn btn-outline" onclick="closeModal()">Hủy</button>
+                    <button class="btn btn-primary" id="confirmation-confirm" onclick="confirmAction()">Xác nhận</button>
                 </div>
-                <span class="material-icons theme-check">check_circle</span>
-            </div>
-            
-            <div class="theme-option" onclick="setTheme('high-contrast')">
-                <div class="theme-preview theme-preview-contrast"></div>
-                <div class="theme-info">
-                    <h4>Tương phản cao</h4>
-                    <p>Dễ nhìn hơn cho người khiếm thị</p>
-                </div>
-                <span class="material-icons theme-check">check_circle</span>
             </div>
         </div>
     </div>
-</div>
 
-<!-- Language Settings Modal -->
-<div id="language-settings-modal" class="modal">
-    <div class="modal-header">
-        <button class="back-btn" onclick="closeModal()">
-            <span class="material-icons">arrow_back</span>
-        </button>
-        <h3>Cài đặt ngôn ngữ</h3>
-    </div>
-    <div class="modal-content">
-        <div class="language-options">
-            <div class="language-option" onclick="setLanguage('vi')">
-                <span class="language-flag">🇻🇳</span>
-                <div class="language-info">
-                    <h4>Tiếng Việt</h4>
-                    <p>Vietnamese</p>
-                </div>
-                <span class="material-icons language-check">check_circle</span>
+    <!-- Toast Container -->
+    <div id="toast-container" class="toast-container" aria-live="polite"></div>
+
+    <!-- Voice Control Overlay -->
+    <div id="voice-overlay" class="voice-overlay">
+        <div class="voice-content">
+            <div class="voice-animation">
+                <div class="voice-wave"></div>
+                <div class="voice-wave"></div>
+                <div class="voice-wave"></div>
             </div>
-            
-            <div class="language-option" onclick="setLanguage('en')">
-                <span class="language-flag">🇺🇸</span>
-                <div class="language-info">
-                    <h4>English</h4>
-                    <p>English (US)</p>
-                </div>
-                <span class="material-icons language-check">check_circle</span>
+            <h3>Đang nghe...</h3>
+            <p id="voice-transcript">Hãy nói lệnh của bạn</p>
+            <button class="btn btn-outline" onclick="stopVoiceControl()">Dừng</button>
+        </div>
+    </div>
+
+    <!-- PWA Install Prompt -->
+    <div id="install-prompt" class="install-prompt">
+        <div class="install-content">
+            <span class="material-icons">get_app</span>
+            <div class="install-text">
+                <h4>Cài đặt SmartHome IoT</h4>
+                <p>Truy cập nhanh hơn từ màn hình chính</p>
+            </div>
+            <div class="install-actions">
+                <button class="btn btn-text btn-sm" onclick="dismissInstall()">Bỏ qua</button>
+                <button class="btn btn-primary btn-sm" onclick="installPWA()">Cài đặt</button>
             </div>
         </div>
     </div>
-</div>
 
-<!-- Notification Settings Modal -->
-<div id="notification-settings-modal" class="modal">
-    <div class="modal-header">
-        <button class="back-btn" onclick="closeModal()">
-            <span class="material-icons">arrow_back</span>
-        </button>
-        <h3>Cài đặt thông báo</h3>
-    </div>
-    <div class="modal-content">
-        <div class="notification-settings">
-            <div class="setting-group">
-                <h4>Loại thông báo</h4>
-                
-                <div class="setting-item">
-                    <div class="setting-info">
-                        <div class="setting-label">Cảnh báo thiết bị</div>
-                        <div class="setting-desc">Thông báo khi thiết bị offline hoặc lỗi</div>
-                    </div>
-                    <label class="switch">
-                        <input type="checkbox" checked onchange="updateNotificationSetting('warnings', this.checked)">
-                        <span class="slider-switch"></span>
-                    </label>
-                </div>
-                
-                <div class="setting-item">
-                    <div class="setting-info">
-                        <div class="setting-label">Kịch bản</div>
-                        <div class="setting-desc">Thông báo khi kịch bản được thực hiện</div>
-                    </div>
-                    <label class="switch">
-                        <input type="checkbox" checked onchange="updateNotificationSetting('scenes', this.checked)">
-                        <span class="slider-switch"></span>
-                    </label>
-                </div>
-                
-                <div class="setting-item">
-                    <div class="setting-info">
-                        <div class="setting-label">Cập nhật</div>
-                        <div class="setting-desc">Thông báo về cập nhật ứng dụng và firmware</div>
-                    </div>
-                    <label class="switch">
-                        <input type="checkbox" checked onchange="updateNotificationSetting('updates', this.checked)">
-                        <span class="slider-switch"></span>
-                    </label>
-                </div>
-                
-                <div class="setting-item">
-                    <div class="setting-info">
-                        <div class="setting-label">Gợi ý thông minh</div>
-                        <div class="setting-desc">Gợi ý tối ưu hóa từ AI</div>
-                    </div>
-                    <label class="switch">
-                        <input type="checkbox" checked onchange="updateNotificationSetting('suggestions', this.checked)">
-                        <span class="slider-switch"></span>
-                    </label>
-                </div>
-            </div>
-            
-            <div class="setting-group">
-                <h4>Giờ im lặng</h4>
-                
-                <div class="setting-item">
-                    <div class="setting-info">
-                        <div class="setting-label">Bật giờ im lặng</div>
-                        <div class="setting-desc">Tắt thông báo trong khoảng thời gian này</div>
-                    </div>
-                    <label class="switch">
-                        <input type="checkbox" checked>
-                        <span class="slider-switch"></span>
-                    </label>
-                </div>
-                
-                <div class="time-range">
-                    <div class="form-group">
-                        <label>Từ</label>
-                        <input type="time" value="22:00">
-                    </div>
-                    <div class="form-group">
-                        <label>Đến</label>
-                        <input type="time" value="07:00">
-                   </div>
-               </div>
-           </div>
-       </div>
-   </div>
-</div>
-
-<!-- Voice Settings Modal -->
-<div id="voice-settings-modal" class="modal">
-   <div class="modal-header">
-       <button class="back-btn" onclick="closeModal()">
-           <span class="material-icons">arrow_back</span>
-       </button>
-       <h3>Cài đặt giọng nói</h3>
-   </div>
-   <div class="modal-content">
-       <div class="voice-settings">
-           <div class="setting-group">
-               <h4>Nhận dạng giọng nói</h4>
-               
-               <div class="setting-item">
-                   <div class="setting-info">
-                       <div class="setting-label">Bật điều khiển giọng nói</div>
-                   </div>
-                   <label class="switch">
-                       <input type="checkbox" checked onchange="updateVoiceSetting('enabled', this.checked)">
-                       <span class="slider-switch"></span>
-                   </label>
-               </div>
-               
-               <div class="form-group">
-                   <label>Độ nhạy</label>
-                   <select onchange="updateVoiceSetting('sensitivity', this.value)">
-                       <option value="low">Thấp</option>
-                       <option value="medium" selected>Trung bình</option>
-                       <option value="high">Cao</option>
-                   </select>
-               </div>
-               
-               <div class="form-group">
-                   <label>Ngôn ngữ nhận dạng</label>
-                   <select onchange="updateVoiceSetting('language', this.value)">
-                       <option value="vi-VN" selected>Tiếng Việt</option>
-                       <option value="en-US">English (US)</option>
-                   </select>
-               </div>
-               
-               <div class="form-group">
-                   <label>Thời gian chờ (giây)</label>
-                   <input type="range" min="3" max="10" value="5" 
-                          oninput="updateVoiceSetting('timeout', this.value * 1000)">
-                   <span>5 giây</span>
-               </div>
-           </div>
-           
-           <div class="setting-group">
-               <h4>Phản hồi giọng nói</h4>
-               
-               <div class="setting-item">
-                   <div class="setting-info">
-                       <div class="setting-label">Tắt tiếng phản hồi</div>
-                   </div>
-                   <label class="switch">
-                       <input type="checkbox" onchange="updateVoiceSetting('muteResponse', this.checked)">
-                       <span class="slider-switch"></span>
-                   </label>
-               </div>
-               
-               <div class="form-group">
-                   <label>Giọng phản hồi</label>
-                   <select onchange="updateVoiceSetting('responseVoice', this.value)">
-                       <option value="female" selected>Nữ</option>
-                       <option value="male">Nam</option>
-                   </select>
-               </div>
-           </div>
-           
-           <div class="voice-test">
-               <button class="btn btn-outline btn-full" onclick="testVoiceRecognition()">
-                   <span class="material-icons">mic</span>
-                   Kiểm tra nhận dạng giọng nói
-               </button>
-           </div>
-       </div>
-   </div>
-</div>
-
-<!-- OTA Settings Modal -->
-<div id="ota-settings-modal" class="modal">
-   <div class="modal-header">
-       <button class="back-btn" onclick="closeModal()">
-           <span class="material-icons">arrow_back</span>
-       </button>
-       <h3>Cập nhật OTA</h3>
-   </div>
-   <div class="modal-content">
-       <div class="ota-settings">
-           <div class="current-version">
-               <div class="version-info">
-                   <h4>Phiên bản hiện tại</h4>
-                   <p class="version-number">v1.2.3 (Build 456)</p>
-                   <p class="version-date">Cập nhật: 15/06/2025</p>
-               </div>
-               <button class="btn btn-primary" onclick="checkForUpdates()">
-                   Kiểm tra cập nhật
-               </button>
-           </div>
-           
-           <div class="auto-update-settings">
-               <div class="setting-item">
-                   <div class="setting-info">
-                       <div class="setting-label">Tự động cập nhật ứng dụng</div>
-                       <div class="setting-desc">Tự động tải và cài đặt bản cập nhật mới</div>
-                   </div>
-                   <label class="switch">
-                       <input type="checkbox" checked>
-                       <span class="slider-switch"></span>
-                   </label>
-               </div>
-               
-               <div class="setting-item">
-                   <div class="setting-info">
-                       <div class="setting-label">Tự động cập nhật thiết bị</div>
-                       <div class="setting-desc">Tự động cập nhật firmware cho thiết bị</div>
-                   </div>
-                   <label class="switch">
-                       <input type="checkbox" checked>
-                       <span class="slider-switch"></span>
-                   </label>
-               </div>
-               
-               <div class="setting-item">
-                   <div class="setting-info">
-                       <div class="setting-label">Chỉ qua WiFi</div>
-                       <div class="setting-desc">Chỉ tải cập nhật khi kết nối WiFi</div>
-                   </div>
-                   <label class="switch">
-                       <input type="checkbox" checked>
-                       <span class="slider-switch"></span>
-                   </label>
-               </div>
-               
-               <div class="setting-item">
-                   <div class="setting-info">
-                       <div class="setting-label">Khi đang sạc</div>
-                       <div class="setting-desc">Chỉ cập nhật khi thiết bị đang sạc</div>
-                   </div>
-                   <label class="switch">
-                       <input type="checkbox">
-                       <span class="slider-switch"></span>
-                   </label>
-               </div>
-           </div>
-           
-           <div class="update-history">
-               <h4>Lịch sử cập nhật</h4>
-               <div class="history-list">
-                   <div class="history-item">
-                       <div class="history-info">
-                           <div class="history-version">v1.2.3</div>
-                           <div class="history-date">15/06/2025</div>
-                       </div>
-                       <div class="history-desc">Cải thiện hiệu suất và sửa lỗi</div>
-                   </div>
-                   <div class="history-item">
-                       <div class="history-info">
-                           <div class="history-version">v1.2.2</div>
-                           <div class="history-date">01/06/2025</div>
-                       </div>
-                       <div class="history-desc">Thêm tính năng điều khiển giọng nói</div>
-                   </div>
-               </div>
-           </div>
-       </div>
-   </div>
-</div>
-
-<!-- Manage Homes Modal -->
-<div id="manage-homes-modal" class="modal">
-   <div class="modal-header">
-       <button class="back-btn" onclick="closeModal()">
-           <span class="material-icons">arrow_back</span>
-       </button>
-       <h3>Quản lý nhà & phòng</h3>
-       <button class="header-btn" onclick="addNewHome()">
-           <span class="material-icons">add</span>
-       </button>
-   </div>
-   <div class="modal-content" id="manage-homes-content">
-       <!-- Content will be populated by JS -->
-   </div>
-</div>
-
-<!-- Add Home Modal -->
-<div id="add-home-modal" class="modal">
-   <div class="modal-header">
-       <button class="back-btn" onclick="closeModal()">
-           <span class="material-icons">arrow_back</span>
-       </button>
-       <h3>Thêm nhà mới</h3>
-   </div>
-   <div class="modal-content">
-       <div class="form-group">
-           <label>Tên nhà</label>
-           <input type="text" id="home-name" placeholder="Nhà của tôi">
-       </div>
-       <div class="form-group">
-           <label>Địa chỉ</label>
-           <input type="text" id="home-address" placeholder="123 Đường ABC, Quận 1, TP.HCM">
-       </div>
-       <div class="form-group">
-           <label>Mô tả</label>
-           <textarea id="home-description" placeholder="Mô tả về ngôi nhà"></textarea>
-       </div>
-       <button class="btn btn-primary btn-full" onclick="saveNewHome()">Thêm nhà</button>
-   </div>
-</div>
-
-<!-- QR Scanner Modal -->
-<div id="qr-scanner-modal" class="modal">
-   <div class="modal-header">
-       <button class="back-btn" onclick="closeModal()">
-           <span class="material-icons">arrow_back</span>
-       </button>
-       <h3>Quét mã QR</h3>
-   </div>
-   <div class="modal-content">
-       <div class="qr-scanner-container">
-           <video id="qr-video" autoplay></video>
-           <div class="qr-overlay">
-               <div class="qr-frame"></div>
-               <p>Đưa camera về phía mã QR thiết bị</p>
-           </div>
-       </div>
-   </div>
-</div>
-
-<!-- Add Scene Modal -->
-<div id="add-scene-modal" class="modal">
-   <div class="modal-header">
-       <button class="back-btn" onclick="closeModal()">
-           <span class="material-icons">arrow_back</span>
-       </button>
-       <h3>Tạo kịch bản mới</h3>
-   </div>
-   <div class="modal-content">
-       <div class="scene-builder">
-           <div class="form-group">
-               <label>Tên kịch bản</label>
-               <input type="text" id="scene-name" placeholder="Về nhà">
-           </div>
-           
-           <div class="form-group">
-               <label>Biểu tượng</label>
-               <div class="icon-selector">
-                   <input type="radio" name="scene-icon" value="🏠" id="icon-home" checked>
-                   <label for="icon-home">🏠</label>
-                   
-                   <input type="radio" name="scene-icon" value="😴" id="icon-sleep">
-                   <label for="icon-sleep">😴</label>
-                   
-                   <input type="radio" name="scene-icon" value="🌅" id="icon-morning">
-                   <label for="icon-morning">🌅</label>
-                   
-                   <input type="radio" name="scene-icon" value="🌙" id="icon-night">
-                   <label for="icon-night">🌙</label>
-                   
-                   <input type="radio" name="scene-icon" value="🎬" id="icon-movie">
-                   <label for="icon-movie">🎬</label>
-                   
-                   <input type="radio" name="scene-icon" value="🛁" id="icon-bath">
-                   <label for="icon-bath">🛁</label>
-               </div>
-           </div>
-           
-           <div class="form-group">
-               <label>Mô tả</label>
-               <textarea id="scene-description" placeholder="Mô tả kịch bản"></textarea>
-           </div>
-           
-           <div class="scene-devices">
-               <h4>Chọn thiết bị</h4>
-               <div id="scene-device-list">
-                   <!-- Devices will be populated by JS -->
-               </div>
-           </div>
-           
-           <button class="btn btn-primary btn-full" onclick="saveNewScene()">Tạo kịch bản</button>
-       </div>
-   </div>
-</div>
-
-<!-- Analytics Chart Modal -->
-<div id="analytics-chart-modal" class="modal">
-   <div class="modal-header">
-       <button class="back-btn" onclick="closeModal()">
-           <span class="material-icons">arrow_back</span>
-       </button>
-       <h3>Biểu đồ chi tiết</h3>
-       <div class="header-actions">
-           <button class="header-btn" onclick="exportChart()">
-               <span class="material-icons">download</span>
-           </button>
-       </div>
-   </div>
-   <div class="modal-content">
-       <div class="chart-controls">
-           <select id="chart-type" onchange="updateChartType()">
-               <option value="line">Biểu đồ đường</option>
-               <option value="bar">Biểu đồ cột</option>
-               <option value="pie">Biểu đồ tròn</option>
-           </select>
-           
-           <select id="chart-period" onchange="updateChartPeriod()">
-               <option value="today">Hôm nay</option>
-               <option value="week" selected>Tuần này</option>
-               <option value="month">Tháng này</option>
-               <option value="year">Năm này</option>
-           </select>
-       </div>
-       
-       <div class="detailed-chart-container">
-           <canvas id="detailed-chart" width="400" height="300"></canvas>
-       </div>
-       
-       <div class="chart-legend">
-           <div class="legend-item">
-               <span class="legend-color" style="background: #2196F3;"></span>
-               <span>Tổng tiêu thụ</span>
-           </div>
-           <div class="legend-item">
-               <span class="legend-color" style="background: #4CAF50;"></span>
-               <span>Tiết kiệm</span>
-           </div>
-           <div class="legend-item">
-               <span class="legend-color" style="background: #FF9800;"></span>
-               <span>Cao điểm</span>
-           </div>
-       </div>
-   </div>
-</div>
-
-<!-- Analytics Settings Modal -->
-<div id="analytics-settings-modal" class="modal">
-   <div class="modal-header">
-       <button class="back-btn" onclick="closeModal()">
-           <span class="material-icons">arrow_back</span>
-       </button>
-       <h3>Cài đặt thống kê</h3>
-   </div>
-   <div class="modal-content">
-       <div class="analytics-settings">
-           <div class="setting-group">
-               <h4>Giá điện</h4>
-               
-               <div class="form-group">
-                   <label>Giá điện (VNĐ/kWh)</label>
-                   <input type="number" id="electricity-cost" value="3000" min="1000" max="10000" step="100">
-               </div>
-               
-               <div class="form-group">
-                   <label>Đơn vị tiền tệ</label>
-                   <select id="currency">
-                       <option value="VND" selected>VNĐ (Việt Nam Đồng)</option>
-                       <option value="USD">USD (US Dollar)</option>
-                   </select>
-               </div>
-           </div>
-           
-           <div class="setting-group">
-               <h4>Cảnh báo</h4>
-               
-               <div class="form-group">
-                   <label>Ngưỡng cảnh báo (%)</label>
-                   <input type="range" id="alert-threshold" min="100" max="200" value="150" 
-                          oninput="document.getElementById('threshold-value').textContent = this.value + '%'">
-                   <span id="threshold-value">150%</span>
-                   <small>Cảnh báo khi tiêu thụ vượt quá % so với trung bình</small>
-               </div>
-               
-               <div class="form-group">
-                   <label>Mục tiêu tiết kiệm (%)</label>
-                   <input type="range" id="savings-goal" min="5" max="50" value="20"
-                          oninput="document.getElementById('savings-value').textContent = this.value + '%'">
-                   <span id="savings-value">20%</span>
-               </div>
-           </div>
-           
-           <div class="setting-group">
-               <h4>Báo cáo</h4>
-               
-               <div class="setting-item">
-                   <div class="setting-info">
-                       <div class="setting-label">Báo cáo hàng tuần</div>
-                       <div class="setting-desc">Gửi báo cáo tổng kết qua email</div>
-                   </div>
-                   <label class="switch">
-                       <input type="checkbox" checked>
-                       <span class="slider-switch"></span>
-                   </label>
-               </div>
-               
-               <div class="setting-item">
-                   <div class="setting-info">
-                       <div class="setting-label">Báo cáo hàng tháng</div>
-                       <div class="setting-desc">Báo cáo chi tiết cuối tháng</div>
-                   </div>
-                   <label class="switch">
-                       <input type="checkbox" checked>
-                       <span class="slider-switch"></span>
-                   </label>
-               </div>
-           </div>
-           
-           <button class="btn btn-primary btn-full" onclick="saveAnalyticsSettings()">Lưu cài đặt</button>
-       </div>
-   </div>
-</div>
-
-<!-- Device Settings Modal -->
-<div id="device-settings-modal" class="modal">
-   <div class="modal-header">
-       <button class="back-btn" onclick="closeModal()">
-           <span class="material-icons">arrow_back</span>
-       </button>
-       <h3>Cài đặt thiết bị</h3>
-   </div>
-   <div class="modal-content">
-       <div class="device-settings">
-           <div class="setting-group">
-               <h4>Kết nối</h4>
-               
-               <div class="form-group">
-                   <label>Thời gian chờ kết nối (giây)</label>
-                   <input type="range" min="5" max="30" value="10">
-                   <span>10 giây</span>
-               </div>
-               
-               <div class="setting-item">
-                   <div class="setting-info">
-                       <div class="setting-label">Tự động kết nối lại</div>
-                       <div class="setting-desc">Tự động thử kết nối lại khi mất kết nối</div>
-                   </div>
-                   <label class="switch">
-                       <input type="checkbox" checked>
-                       <span class="slider-switch"></span>
-                   </label>
-               </div>
-           </div>
-           
-           <div class="setting-group">
-               <h4>Hiển thị</h4>
-               
-               <div class="setting-item">
-                   <div class="setting-info">
-                       <div class="setting-label">Hiển thị thiết bị offline</div>
-                   </div>
-                   <label class="switch">
-                       <input type="checkbox" checked>
-                       <span class="slider-switch"></span>
-                   </label>
-               </div>
-               
-               <div class="setting-item">
-                   <div class="setting-info">
-                       <div class="setting-label">Nhóm theo phòng</div>
-                   </div>
-                   <label class="switch">
-                       <input type="checkbox" checked>
-                       <span class="slider-switch"></span>
-                   </label>
-               </div>
-           </div>
-           
-           <div class="device-actions">
-               <button class="btn btn-outline btn-full" onclick="scanForDevices()">
-                   <span class="material-icons">refresh</span>
-                   Quét thiết bị mới
-               </button>
-               
-               <button class="btn btn-outline btn-full" onclick="resetAllDevices()">
-                   <span class="material-icons">settings_backup_restore</span>
-                   Đặt lại tất cả thiết bị
-               </button>
-           </div>
-       </div>
-   </div>
-</div>
-
-<!-- Automation Rule Builder Modal -->
-<div id="automation-rule-builder-modal" class="modal">
-   <div class="modal-header">
-       <button class="back-btn" onclick="closeModal()">
-           <span class="material-icons">arrow_back</span>
-       </button>
-       <h3>Tạo quy tắc tự động</h3>
-   </div>
-   <div class="modal-content" id="rule-builder-content">
-       <!-- Content will be populated by JS -->
-   </div>
-</div>
-
-<!-- Security Settings Modal -->
-<div id="security-settings-modal" class="modal">
-   <div class="modal-header">
-       <button class="back-btn" onclick="closeModal()">
-           <span class="material-icons">arrow_back</span>
-       </button>
-       <h3>Bảo mật 2 lớp</h3>
-   </div>
-   <div class="modal-content">
-       <div class="security-settings">
-           <div class="setting-item">
-               <div class="setting-info">
-                   <div class="setting-label">Bật xác thực 2 lớp</div>
-                   <div class="setting-desc">Sử dụng SMS hoặc app xác thực</div>
-               </div>
-               <label class="switch">
-                   <input type="checkbox" onchange="toggle2FA(this.checked)">
-                   <span class="slider-switch"></span>
-               </label>
-           </div>
-           
-           <div class="setting-item">
-               <div class="setting-info">
-                   <div class="setting-label">Khóa ứng dụng</div>
-                   <div class="setting-desc">Yêu cầu PIN hoặc vân tay khi mở app</div>
-               </div>
-               <label class="switch">
-                   <input type="checkbox" onchange="toggleAppLock(this.checked)">
-                   <span class="slider-switch"></span>
-               </label>
-           </div>
-           
-           <div class="session-management">
-               <h4>Quản lý phiên đăng nhập</h4>
-               <div class="session-list">
-                   <div class="session-item">
-                       <div class="session-info">
-                           <div class="session-device">iPhone 15 Pro</div>
-                           <div class="session-location">Hà Nội, Việt Nam</div>
-                           <div class="session-time">Đang hoạt động</div>
-                       </div>
-                       <span class="session-current">Hiện tại</span>
-                   </div>
-               </div>
-               
-               <button class="btn btn-outline btn-full" onclick="logoutAllDevices()">
-                   Đăng xuất tất cả thiết bị
-               </button>
-           </div>
-       </div>
-   </div>
-</div>
-
-<!-- Backup & Restore Modal -->
-<div id="backup-restore-modal" class="modal">
-   <div class="modal-header">
-       <button class="back-btn" onclick="closeModal()">
-           <span class="material-icons">arrow_back</span>
-       </button>
-       <h3>Sao lưu & khôi phục</h3>
-   </div>
-   <div class="modal-content">
-       <div class="backup-settings">
-           <div class="backup-status">
-               <div class="status-info">
-                   <h4>Sao lưu gần nhất</h4>
-                   <p>15/06/2025, 14:30</p>
-                   <span class="status-success">Thành công</span>
-               </div>
-               <button class="btn btn-primary" onclick="createBackup()">
-                   Sao lưu ngay
-               </button>
-           </div>
-           
-           <div class="setting-item">
-               <div class="setting-info">
-                   <div class="setting-label">Tự động sao lưu</div>
-                   <div class="setting-desc">Sao lưu hàng ngày lên cloud</div>
-               </div>
-               <label class="switch">
-                   <input type="checkbox" checked>
-                   <span class="slider-switch"></span>
-               </label>
-           </div>
-           
-           <div class="backup-options">
-               <h4>Dữ liệu sao lưu</h4>
-               
-               <div class="backup-item">
-                   <label class="checkbox">
-                       <input type="checkbox" checked>
-                       <span class="checkmark"></span>
-                       Cài đặt thiết bị
-                   </label>
-               </div>
-               
-               <div class="backup-item">
-                   <label class="checkbox">
-                       <input type="checkbox" checked>
-                       <span class="checkmark"></span>
-                       Kịch bản & quy tắc
-                   </label>
-               </div>
-               
-               <div class="backup-item">
-                   <label class="checkbox">
-                       <input type="checkbox" checked>
-                       <span class="checkmark"></span>
-                       Dữ liệu thống kê
-                   </label>
-               </div>
-               
-               <div class="backup-item">
-                   <label class="checkbox">
-                       <input type="checkbox">
-                       <span class="checkmark"></span>
-                       Lịch sử thông báo
-                   </label>
-               </div>
-           </div>
-           
-           <div class="restore-section">
-               <h4>Khôi phục</h4>
-               <input type="file" id="restore-file" accept=".json" style="display: none;">
-               <button class="btn btn-outline btn-full" onclick="selectRestoreFile()">
-                   Chọn file sao lưu
-               </button>
-           </div>
-       </div>
-   </div>
-</div>
+    <!-- Scripts -->
+    <script src="js/utils.js"></script>
+    <script src="js/data.js"></script>
+    <script src="js/components.js"></script>
+    <script src="js/app.js"></script>
+    
+    <!-- Service Worker Registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                    .then(reg => console.log('SW registered'))
+                    .catch(err => console.log('SW registration failed'));
+            });
+        }
+    </script>
 </body>
 </html>

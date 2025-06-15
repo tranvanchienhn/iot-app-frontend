@@ -1,443 +1,1010 @@
-// Main Application Entry Point
+// js/app.js - Tối ưu và hoàn chỉnh
 class SmartHomeApp {
     constructor() {
         this.isInitialized = false;
-        this.authToken = null;
-        this.currentUser = null;
+        this.currentTheme = 'light';
+        this.eventHandlers = new Map();
+        this.performanceMetrics = {
+            startTime: performance.now(),
+            loadTime: null,
+            interactionCount: 0
+        };
         
         this.init();
     }
 
     async init() {
         try {
-            await this.showSplashScreen();
+            this.showLoadingMessage('Khởi tạo ứng dụng...');
+            
+            // Initialize core systems
+            await this.initializeCore();
+            
+            this.showLoadingMessage('Kiểm tra xác thực...');
             await this.checkAuthentication();
+            
+            this.showLoadingMessage('Tải dữ liệu...');
             await this.initializeApp();
             
-            this.isInitialized = true;
-            console.log('SmartHome IoT App initialized successfully');
-        } catch (error) {
-            Utils.error.handle(error, 'Failed to initialize app');
-            this.showErrorScreen(error);
-        }
-    }
-
-    async showSplashScreen() {
-        return new Promise((resolve) => {
-            setTimeout(() => {
-                document.getElementById('splash-screen').classList.add('hidden');
-                resolve();
-            }, 2000);
-        });
-    }
-
-    async checkAuthentication() {
-        const savedToken = Utils.storage.get('auth_token');
-        const savedUser = Utils.storage.get('user_data');
-        
-        if (savedToken && savedUser) {
-            this.authToken = savedToken;
-            this.currentUser = savedUser;
-            dataManager.setUser(savedUser);
+            this.showLoadingMessage('Hoàn tất...');
+            await this.finishInitialization();
             
-            try {
-                await this.validateToken(savedToken);
-                this.showMainApp();
-            } catch (error) {
-                this.showAuthScreens();
-            }
-        } else {
-            this.showAuthScreens();
-        }
-    }
-
-    async validateToken(token) {
-        return new Promise((resolve, reject) => {
-            setTimeout(() => {
-                const isValid = Math.random() > 0.1;
-                if (isValid) {
-                    resolve(true);
-                } else {
-                    reject(new Error('Token expired'));
-                }
-            }, 500);
-        });
-    }
-
-    showAuthScreens() {
-        document.getElementById('auth-container').classList.remove('hidden');
-        this.showAuthScreen('login');
-    }
-
-    showAuthScreen(screenName) {
-        const screens = document.querySelectorAll('.auth-screen');
-        screens.forEach(screen => screen.classList.remove('active'));
-        
-        const targetScreen = document.getElementById(`${screenName}-screen`);
-        if (targetScreen) {
-            targetScreen.classList.add('active');
-        }
-    }
-
-    showMainApp() {
-        document.getElementById('auth-container').classList.add('hidden');
-        document.getElementById('app-container').classList.remove('hidden');
-        
-        this.initializeMainApp();
-    }
-
-    async initializeApp() {
-        if (dataManager.isLoggedIn()) {
-            await this.loadUserData();
-            this.initializeMainApp();
-        }
-    }
-
-    async loadUserData() {
-        try {
-            await this.simulateDataLoading();
+            this.recordPerformanceMetric('loadTime', performance.now() - this.performanceMetrics.startTime);
+            console.log(`App loaded in ${this.performanceMetrics.loadTime.toFixed(2)}ms`);
             
-            if (dataManager.getState('homes').length === 0) {
-                dataManager.initializeSampleData();
-            }
         } catch (error) {
-            Utils.error.log(error, 'loadUserData');
+            this.handleInitializationError(error);
         }
     }
 
-    async simulateDataLoading() {
-        return new Promise(resolve => {
-            setTimeout(resolve, 1000);
-        });
-    }
-
-    initializeMainApp() {
-        this.setupDataSubscriptions();
-        
-        ui.renderHomeScreen();
-        ui.updateNotificationBadge();
-        
-        this.setupEnhancedPeriodicUpdates();
-        this.setupServiceWorker();
-        this.initializeAutomationEngine();
-        
-        ui.showScreen('home');
-    }
-
-    setupDataSubscriptions() {
-        dataManager.subscribe('notifications', (notifications) => {
-            ui.updateNotificationBadge();
-        });
-
-        dataManager.subscribe('devices', (devices) => {
-            if (ui.currentScreen === 'home' || ui.currentScreen === 'devices') {
-                ui.refreshCurrentScreen();
-            }
-        });
-
-        dataManager.subscribe('scenes', (scenes) => {
-            if (ui.currentScreen === 'home' || ui.currentScreen === 'scenes') {
-                ui.refreshCurrentScreen();
-            }
-        });
-
-        dataManager.subscribe('automationRules', (rules) => {
-            if (ui.currentScreen === 'scenes') {
-                ui.refreshCurrentScreen();
-            }
-        });
-    }
-
-    setupEnhancedPeriodicUpdates() {
-        // Update device status every 10 seconds
-        setInterval(() => {
-            this.updateDeviceStatus();
-        }, 10000);
-
-        // Simulate realistic device behavior every 5 seconds
-        setInterval(() => {
-            dataManager.simulateRealTimeDeviceStatus();
-        }, 5000);
-
-        // Generate analytics data every 30 minutes
-        setInterval(() => {
-            this.generateAnalyticsData();
-        }, 1800000);
-
-        // Check for notifications every 2 minutes
-        setInterval(() => {
-            this.checkForNotifications();
-        }, 120000);
-
-        // Learn usage patterns every hour
-        setInterval(() => {
-            dataManager.automationEngine.learnUsagePatterns();
-        }, 3600000);
-
-        // Generate smart suggestions every 30 minutes
-        setInterval(() => {
-            this.generateAndShowSmartSuggestions();
-        }, 1800000);
-    }
-
-    initializeAutomationEngine() {
-        const rules = dataManager.getState('automationRules');
-        rules.forEach(rule => {
-            dataManager.automationEngine.registerRule(rule);
-        });
-
-        console.log(`Initialized ${rules.length} automation rules`);
-    }
-
-    generateAndShowSmartSuggestions() {
-        const suggestions = dataManager.generateSmartSuggestions();
-        
-        suggestions.forEach(suggestion => {
-            if (suggestion.priority === 'high') {
-                dataManager.addNotification({
-                    type: 'warning',
-                    title: suggestion.title,
-                    message: suggestion.message,
-                    icon: '💡'
-                });
-            }
-        });
-    }
-
-    updateDeviceStatus() {
-        const devices = dataManager.getState('devices');
-        let hasChanges = false;
-
-        devices.forEach(device => {
-            if (Math.random() < 0.02) {
-                const updates = {};
-                
-                if (device.isOnline && Math.random() < 0.3) {
-                    updates.isOnline = false;
-                    updates.lastSeen = new Date().toISOString();
-                    
-                    dataManager.addNotification({
-                        type: 'warning',
-                        title: `${device.name} mất kết nối`,
-                        message: 'Thiết bị đã mất kết nối với mạng WiFi',
-                        icon: device.icon
-                    });
-                } else if (!device.isOnline && Math.random() < 0.7) {
-                    updates.isOnline = true;
-                    
-                    dataManager.addNotification({
-                        type: 'success',
-                        title: `${device.name} đã kết nối lại`,
-                        message: 'Thiết bị đã khôi phục kết nối',
-                        icon: device.icon
-                    });
-                }
-
-                if (device.type === 'water_heater' && Math.random() < 0.01) {
-                    dataManager.addSmartNotification('maintenance_reminder', device.id, {
-                        message: 'Khuyến nghị vệ sinh và kiểm tra định kỳ sau 6 tháng sử dụng'
-                    });
-                }
-
-                if ((device.type === 'water_heater' || device.type === 'towel_dryer') && 
-                    device.isOn && Math.random() < 0.005) {
-                    dataManager.addSmartNotification('energy_high', device.id);
-                }
-
-                if (Object.keys(updates).length > 0) {
-                    dataManager.updateDevice(device.id, updates);
-                    hasChanges = true;
-                }
-            }
-        });
-
-        if (hasChanges) {
-            ui.refreshCurrentScreen();
+    showLoadingMessage(message) {
+        const element = document.getElementById('loading-message');
+        if (element) {
+            element.textContent = message;
         }
     }
 
-    generateAnalyticsData() {
-        const devices = dataManager.getState('devices');
+    async initializeCore() {
+        // Initialize theme
+        this.initializeTheme();
         
-        devices.forEach(device => {
-            if (device.isOnline && device.isOn) {
-                const consumption = dataManager.calculateHourlyConsumption(device) * 
-                                 (Math.random() * 0.4 + 0.8);
-                
-                dataManager.recordEnergyConsumption(device.id, consumption);
-            }
-        });
+        // Setup event listeners
+        this.setupGlobalEventListeners();
+        
+        // Initialize PWA features
+        this.initializePWA();
+        
+        // Setup error handling
+        this.setupErrorHandling();
+        
+        // Initialize accessibility features
+        this.initializeAccessibility();
     }
 
-    checkForNotifications() {
-        const todayEnergy = dataManager.getTotalEnergyToday();
-        const avgEnergy = dataManager.getAverageEnergyConsumption();
+    initializeTheme() {
+        const savedTheme = Utils.storage.get('app_theme', 'light');
+        this.applyTheme(savedTheme);
         
-        if (todayEnergy > avgEnergy * 1.3) {
-            dataManager.addNotification({
-                type: 'warning',
-                title: 'Tiêu thụ điện cao',
-                message: `Hôm nay tiêu thụ cao hơn 30% so với trung bình (${Utils.formatNumber(todayEnergy, 1)} kWh)`,
-                icon: '⚡'
-            });
-        }
-
-        this.checkDeviceUpdates();
-    }
-
-    checkDeviceUpdates() {
-        const devices = dataManager.getState('devices');
-        
-        devices.forEach(device => {
-            if (Math.random() < 0.01) {
-                dataManager.addNotification({
-                    type: 'info',
-                    title: 'Cập nhật có sẵn',
-                    message: `Firmware mới cho ${device.name}`,
-                    icon: device.icon
-                });
-            }
-        });
-    }
-
-    setupServiceWorker() {
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.addEventListener('message', event => {
-                this.handleServiceWorkerMessage(event.data);
+        // Watch for system theme changes
+        if (savedTheme === 'auto') {
+            const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+            mediaQuery.addEventListener('change', (e) => {
+                if (this.currentTheme === 'auto') {
+                    this.applySystemTheme(e.matches);
+                }
             });
         }
     }
 
-    handleServiceWorkerMessage(data) {
-        switch (data.type) {
-            case 'PUSH_NOTIFICATION':
-                this.handlePushNotification(data.payload);
-                break;
-            case 'BACKGROUND_SYNC':
-                this.handleBackgroundSync(data.payload);
-                break;
-        }
-    }
-
-    handlePushNotification(payload) {
-        dataManager.addNotification({
-            type: payload.type || 'info',
-            title: payload.title,
-            message: payload.message,
-            icon: payload.icon
-        });
-    }
-
-    handleBackgroundSync(payload) {
-        console.log('Background sync:', payload);
-    }
-
-    // Enhanced voice commands for new devices
-    processEnhancedVoiceCommand(command) {
-        const normalizedCommand = command.toLowerCase().trim();
+    applyTheme(theme) {
+        const body = document.body;
         
-        if (normalizedCommand.includes('bình nóng lạnh') || normalizedCommand.includes('nước nóng')) {
-            this.processWaterHeaterVoiceCommand(normalizedCommand);
-        } else if (normalizedCommand.includes('máy sấy khăn') || normalizedCommand.includes('sấy khăn')) {
-            this.processTowelDryerVoiceCommand(normalizedCommand);
-        } else if (normalizedCommand.includes('sưởi phòng') || normalizedCommand.includes('làm ấm')) {
-            this.processRoomHeatingVoiceCommand(normalizedCommand);
+        // Add transition class
+        body.classList.add('theme-transition');
+        
+        // Remove existing theme classes
+        body.classList.remove('theme-light', 'theme-dark', 'theme-auto', 'theme-high-contrast');
+        
+        // Apply new theme
+        if (theme === 'auto') {
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            body.classList.add(prefersDark ? 'theme-dark' : 'theme-light');
         } else {
-            ui.processVoiceCommand(command);
+            body.classList.add(`theme-${theme}`);
         }
+        
+        this.currentTheme = theme;
+        
+        // Update meta theme color
+        const themeColor = theme === 'dark' ? '#1A1A1A' : '#2196F3';
+        document.querySelector('meta[name="theme-color"]').content = themeColor;
+        
+        // Save preference
+        Utils.storage.set('app_theme', theme);
+        
+        // Remove transition class after animation
+        setTimeout(() => {
+            body.classList.remove('theme-transition');
+        }, 300);
     }
 
-    processWaterHeaterVoiceCommand(command) {
-        const waterHeaters = dataManager.getDevicesByType('water_heater');
-        if (waterHeaters.length === 0) {
-            ui.showToast('Không tìm thấy bình nóng lạnh', 'warning');
+    applySystemTheme(isDark) {
+        const body = document.body;
+        body.classList.remove('theme-light', 'theme-dark');
+        body.classList.add(isDark ? 'theme-dark' : 'theme-light');
+    }
+
+    setupGlobalEventListeners() {
+        // Keyboard shortcuts
+        document.addEventListener('keydown', this.handleKeyboardShortcuts.bind(this));
+        
+        // Back button handling
+        window.addEventListener('popstate', this.handlePopState.bind(this));
+        
+        // Touch gestures
+        this.setupTouchGestures();
+        
+        // Network status
+        window.addEventListener('online', () => {
+            ui.showToast('Kết nối internet đã được khôi phục', 'success');
+            this.syncOfflineData();
+        });
+        
+        window.addEventListener('offline', () => {
+            ui.showToast('Đang hoạt động offline', 'warning');
+        });
+        
+        // Visibility change
+        document.addEventListener('visibilitychange', this.handleVisibilityChange.bind(this));
+        
+        // Performance monitoring
+        this.setupPerformanceMonitoring();
+    }
+
+    handleKeyboardShortcuts(event) {
+        // Global shortcuts
+        if (event.key === 'Escape') {
+            if (ui.isModalOpen()) {
+                ui.closeModal();
+            } else if (ui.isVoiceActive) {
+                ui.stopVoiceControl();
+            }
             return;
         }
+        
+        // Navigation shortcuts (Ctrl/Cmd + number)
+        if (event.ctrlKey || event.metaKey) {
+            const shortcuts = {
+                '1': 'home',
+                '2': 'devices', 
+                '3': 'analytics',
+                '4': 'settings'
+            };
+            
+            if (shortcuts[event.key]) {
+                event.preventDefault();
+                ui.showScreen(shortcuts[event.key]);
+            }
+        }
+        
+        // Quick actions (Alt + key)
+        if (event.altKey) {
+            switch (event.key) {
+                case 'h':
+                    event.preventDefault();
+                    quickHeatWater(45);
+                    break;
+                case 't':
+                    event.preventDefault();
+                    quickStartTowelDrying();
+                    break;
+                case 'r':
+                    event.preventDefault();
+                    quickStartRoomHeating();
+                    break;
+                case 'v':
+                    event.preventDefault();
+                    ui.startVoiceControl();
+                    break;
+            }
+        }
+    }
 
-        const waterHeater = waterHeaters[0];
+    setupTouchGestures() {
+        let touchStartX = 0;
+        let touchStartY = 0;
+        let touchStartTime = 0;
+        
+        document.addEventListener('touchstart', (e) => {
+            touchStartX = e.touches[0].clientX;
+            touchStartY = e.touches[0].clientY;
+            touchStartTime = Date.now();
+        }, { passive: true });
+        
+        document.addEventListener('touchend', (e) => {
+            const touchEndX = e.changedTouches[0].clientX;
+            const touchEndY = e.changedTouches[0].clientY;
+            const touchEndTime = Date.now();
+            
+            const deltaX = touchEndX - touchStartX;
+            const deltaY = touchEndY - touchStartY;
+            const deltaTime = touchEndTime - touchStartTime;
+            
+            // Swipe detection (minimum distance and maximum time)
+            if (Math.abs(deltaX) > 50 && Math.abs(deltaX) > Math.abs(deltaY) && deltaTime < 300) {
+                if (deltaX > 0) {
+                    this.handleSwipeRight();
+                } else {
+                    this.handleSwipeLeft();
+                }
+            }
+        }, { passive: true });
+    }
 
-        if (command.includes('bật') || command.includes('mở')) {
-            dataManager.updateDevice(waterHeater.id, { isOn: true });
-            ui.showToast('Đã bật bình nóng lạnh', 'success');
-       } else if (command.includes('tắt') || command.includes('đóng')) {
-           dataManager.updateDevice(waterHeater.id, { isOn: false });
-           ui.showToast('Đã tắt bình nóng lạnh', 'success');
-       } else if (command.includes('nhiệt độ')) {
-           const tempMatch = command.match(/(\d+)/);
-           if (tempMatch) {
-               const temp = parseInt(tempMatch[1]);
-               if (temp >= 30 && temp <= 75) {
-                   dataManager.updateDevice(waterHeater.id, { targetTemperature: temp });
-                   ui.showToast(`Đã đặt nhiệt độ ${temp}°C`, 'success');
+    handleSwipeLeft() {
+        const screens = ['home', 'devices', 'analytics', 'settings'];
+        const currentIndex = screens.indexOf(ui.currentScreen);
+        if (currentIndex < screens.length - 1) {
+            ui.showScreen(screens[currentIndex + 1]);
+        }
+    }
+
+    handleSwipeRight() {
+        const screens = ['home', 'devices', 'analytics', 'settings'];
+        const currentIndex = screens.indexOf(ui.currentScreen);
+        if (currentIndex > 0) {
+            ui.showScreen(screens[currentIndex - 1]);
+        }
+    }
+
+    setupPerformanceMonitoring() {
+        // Monitor interaction responsiveness
+        const observer = new PerformanceObserver((list) => {
+            for (const entry of list.getEntries()) {
+                if (entry.entryType === 'measure') {
+                    console.log(`${entry.name}: ${entry.duration.toFixed(2)}ms`);
+                }
+            }
+        });
+        
+        if ('observe' in observer) {
+            observer.observe({ entryTypes: ['measure'] });
+        }
+        
+        // Track user interactions
+        ['click', 'touchstart', 'keydown'].forEach(eventType => {
+            document.addEventListener(eventType, () => {
+                this.performanceMetrics.interactionCount++;
+            }, { passive: true });
+        });
+    }
+
+    recordPerformanceMetric(name, value) {
+        this.performanceMetrics[name] = value;
+        performance.mark(`smarthome-${name}`);
+    }
+
+    initializePWA() {
+        // Service worker registration
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js').then(registration => {
+                   console.log('Service Worker registered:', registration);
+                   this.handleServiceWorkerUpdates(registration);
+               })
+               .catch(error => {
+                   console.error('Service Worker registration failed:', error);
+               });
+       }
+
+       // Install prompt handling
+       window.addEventListener('beforeinstallprompt', (e) => {
+           e.preventDefault();
+           this.installPrompt = e;
+           
+           // Show install prompt after user interaction
+           setTimeout(() => {
+               if (!Utils.storage.get('install_dismissed')) {
+                   this.showInstallPrompt();
+               }
+           }, 30000); // Show after 30 seconds
+       });
+
+       // App installed event
+       window.addEventListener('appinstalled', () => {
+           this.hideInstallPrompt();
+           ui.showToast('Ứng dụng đã được cài đặt thành công!', 'success');
+           Utils.storage.set('app_installed', true);
+       });
+
+       // Handle URL shortcuts from manifest
+       this.handleURLShortcuts();
+   }
+
+   handleServiceWorkerUpdates(registration) {
+       registration.addEventListener('updatefound', () => {
+           const newWorker = registration.installing;
+           
+           newWorker.addEventListener('statechange', () => {
+               if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                   // Show update available notification
+                   this.showUpdateAvailable();
+               }
+           });
+       });
+   }
+
+   showUpdateAvailable() {
+       const toast = ui.createToast(
+           'Phiên bản mới có sẵn. Tải lại để cập nhật?',
+           'info'
+       );
+       
+       // Add reload button
+       const reloadBtn = document.createElement('button');
+       reloadBtn.className = 'btn btn-text btn-sm';
+       reloadBtn.textContent = 'Tải lại';
+       reloadBtn.onclick = () => window.location.reload();
+       
+       toast.querySelector('.toast-content').appendChild(reloadBtn);
+       document.getElementById('toast-container').appendChild(toast);
+   }
+
+   handleURLShortcuts() {
+       const urlParams = new URLSearchParams(window.location.search);
+       const action = urlParams.get('action');
+       
+       if (action && dataManager.isLoggedIn()) {
+           // Execute action after app loads
+           setTimeout(() => {
+               switch (action) {
+                   case 'water_heater_on':
+                       quickHeatWater(45);
+                       break;
+                   case 'towel_drying':
+                       quickStartTowelDrying();
+                       break;
+                   case 'room_heating':
+                       quickStartRoomHeating();
+                       break;
+               }
+           }, 1000);
+       }
+   }
+
+   setupErrorHandling() {
+       // Global error handlers
+       window.addEventListener('error', (event) => {
+           this.handleError(event.error, 'Global error');
+       });
+
+       window.addEventListener('unhandledrejection', (event) => {
+           this.handleError(event.reason, 'Unhandled promise rejection');
+           event.preventDefault();
+       });
+   }
+
+   handleError(error, context) {
+       console.error(`${context}:`, error);
+       
+       // Log to analytics service (if available)
+       if (window.gtag) {
+           gtag('event', 'exception', {
+               description: error.message,
+               fatal: false
+           });
+       }
+       
+       // Show user-friendly error message
+       if (!error.message?.includes('Network')) {
+           ui.showToast('Đã xảy ra lỗi không mong muốn', 'error');
+       }
+   }
+
+   initializeAccessibility() {
+       // Focus management
+       this.setupFocusManagement();
+       
+       // Keyboard navigation
+       this.setupKeyboardNavigation();
+       
+       // Screen reader announcements
+       this.setupScreenReaderAnnouncements();
+       
+       // Color contrast adjustments
+       if (window.matchMedia('(prefers-contrast: high)').matches) {
+           document.body.classList.add('high-contrast');
+       }
+       
+       // Reduced motion support
+       if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+           document.body.classList.add('reduced-motion');
+       }
+   }
+
+   setupFocusManagement() {
+       // Track focus for keyboard navigation
+       document.addEventListener('keydown', (e) => {
+           if (e.key === 'Tab') {
+               document.body.classList.add('keyboard-navigation');
+           }
+       });
+
+       document.addEventListener('mousedown', () => {
+           document.body.classList.remove('keyboard-navigation');
+       });
+
+       // Focus trap for modals
+       document.addEventListener('keydown', (e) => {
+           if (e.key === 'Tab' && ui.isModalOpen()) {
+               this.trapFocusInModal(e);
+           }
+       });
+   }
+
+   trapFocusInModal(event) {
+       const modal = document.querySelector('.modal:not([style*="display: none"])');
+       if (!modal) return;
+
+       const focusableElements = modal.querySelectorAll(
+           'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+       );
+       
+       const firstElement = focusableElements[0];
+       const lastElement = focusableElements[focusableElements.length - 1];
+
+       if (event.shiftKey) {
+           if (document.activeElement === firstElement) {
+               event.preventDefault();
+               lastElement.focus();
+           }
+       } else {
+           if (document.activeElement === lastElement) {
+               event.preventDefault();
+               firstElement.focus();
+           }
+       }
+   }
+
+   setupKeyboardNavigation() {
+       // Arrow key navigation for grids
+       document.addEventListener('keydown', (e) => {
+           if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+               this.handleArrowKeyNavigation(e);
+           }
+       });
+   }
+
+   handleArrowKeyNavigation(event) {
+       const focusedElement = document.activeElement;
+       const isInGrid = focusedElement.closest('.device-grid, .quick-actions-grid, .summary-cards');
+       
+       if (!isInGrid) return;
+
+       const gridItems = Array.from(isInGrid.children);
+       const currentIndex = gridItems.indexOf(focusedElement);
+       
+       if (currentIndex === -1) return;
+
+       let newIndex = currentIndex;
+       const columns = this.getGridColumns(isInGrid);
+
+       switch (event.key) {
+           case 'ArrowLeft':
+               newIndex = Math.max(0, currentIndex - 1);
+               break;
+           case 'ArrowRight':
+               newIndex = Math.min(gridItems.length - 1, currentIndex + 1);
+               break;
+           case 'ArrowUp':
+               newIndex = Math.max(0, currentIndex - columns);
+               break;
+           case 'ArrowDown':
+               newIndex = Math.min(gridItems.length - 1, currentIndex + columns);
+               break;
+       }
+
+       if (newIndex !== currentIndex) {
+           event.preventDefault();
+           gridItems[newIndex].focus();
+       }
+   }
+
+   getGridColumns(gridElement) {
+       const style = window.getComputedStyle(gridElement);
+       const columns = style.gridTemplateColumns.split(' ').length;
+       return columns;
+   }
+
+   setupScreenReaderAnnouncements() {
+       // Create live region for announcements
+       const liveRegion = document.createElement('div');
+       liveRegion.setAttribute('aria-live', 'polite');
+       liveRegion.setAttribute('aria-atomic', 'true');
+       liveRegion.className = 'sr-only';
+       liveRegion.id = 'live-region';
+       document.body.appendChild(liveRegion);
+
+       // Announce important state changes
+       dataManager.subscribe('devices', (devices) => {
+           const changedDevices = this.getChangedDevices(devices);
+           if (changedDevices.length > 0) {
+               this.announceToScreenReader(
+                   `${changedDevices.length} thiết bị đã thay đổi trạng thái`
+               );
+           }
+       });
+   }
+
+   announceToScreenReader(message) {
+       const liveRegion = document.getElementById('live-region');
+       if (liveRegion) {
+           liveRegion.textContent = message;
+           setTimeout(() => {
+               liveRegion.textContent = '';
+           }, 1000);
+       }
+   }
+
+   async checkAuthentication() {
+       const savedToken = Utils.storage.get('auth_token');
+       const savedUser = Utils.storage.get('user_data');
+       
+       if (savedToken && savedUser) {
+           try {
+               await this.validateToken(savedToken);
+               dataManager.setUser(savedUser);
+               this.showMainApp();
+           } catch (error) {
+               this.showAuthScreens();
+           }
+       } else {
+           this.showAuthScreens();
+       }
+   }
+
+   async validateToken(token) {
+       // Simulate token validation with better error handling
+       return new Promise((resolve, reject) => {
+           setTimeout(() => {
+               const isValid = Math.random() > 0.05; // 95% success rate
+               if (isValid) {
+                   resolve(true);
                } else {
-                   ui.showToast('Nhiệt độ phải từ 30°C đến 75°C', 'warning');
+                   reject(new Error('Token expired'));
+               }
+           }, 500);
+       });
+   }
+
+   showAuthScreens() {
+       document.getElementById('splash-screen').classList.add('hidden');
+       document.getElementById('auth-container').classList.remove('hidden');
+       showAuthScreen('login');
+   }
+
+   showMainApp() {
+       document.getElementById('splash-screen').classList.add('hidden');
+       document.getElementById('auth-container').classList.add('hidden');
+       document.getElementById('app-container').classList.remove('hidden');
+       
+       this.initializeMainApp();
+   }
+
+   async initializeApp() {
+       if (dataManager.isLoggedIn()) {
+           await this.loadUserData();
+       }
+   }
+
+   async loadUserData() {
+       try {
+           // Initialize data if first time
+           if (dataManager.getState('homes').length === 0) {
+               dataManager.initializeRealData();
+           }
+           
+           // Setup real-time updates
+           this.setupRealTimeUpdates();
+           
+       } catch (error) {
+           console.warn('Failed to load user data:', error);
+           // Continue with cached data
+       }
+   }
+
+   initializeMainApp() {
+       // Setup data subscriptions
+       this.setupDataSubscriptions();
+       
+       // Initialize UI
+       ui.renderHomeScreen();
+       ui.updateNotificationBadge();
+       
+       // Setup periodic updates
+       this.setupPeriodicUpdates();
+       
+       // Show initial screen
+       ui.showScreen('home');
+       
+       this.isInitialized = true;
+   }
+
+   setupDataSubscriptions() {
+       // Subscribe to state changes
+       dataManager.subscribe('notifications', () => {
+           ui.updateNotificationBadge();
+       });
+
+       dataManager.subscribe('devices', () => {
+           if (['home', 'devices'].includes(ui.currentScreen)) {
+               ui.refreshCurrentScreen();
+           }
+       });
+
+       dataManager.subscribe('user', (user) => {
+           ui.updateUserProfile(user);
+       });
+   }
+
+   setupRealTimeUpdates() {
+       // Simulate real-time device updates every 30 seconds
+       this.deviceUpdateInterval = setInterval(() => {
+           this.updateDeviceStatus();
+       }, 30000);
+
+       // Temperature simulation every 10 seconds
+       this.temperatureInterval = setInterval(() => {
+           this.simulateTemperatureChanges();
+       }, 10000);
+
+       // Check for notifications every 2 minutes
+       this.notificationInterval = setInterval(() => {
+           this.checkForNotifications();
+       }, 120000);
+   }
+
+   setupPeriodicUpdates() {
+       // Periodic data sync every 5 minutes
+       this.syncInterval = setInterval(() => {
+           this.syncData();
+       }, 300000);
+
+       // Performance cleanup every 10 minutes
+       this.cleanupInterval = setInterval(() => {
+           this.performanceCleanup();
+       }, 600000);
+   }
+
+   updateDeviceStatus() {
+       const devices = dataManager.getState('devices');
+       let hasChanges = false;
+
+       devices.forEach(device => {
+           // Simulate occasional connection issues (very rare)
+           if (Math.random() < 0.002) { // 0.2% chance
+               const wasOnline = device.isOnline;
+               device.isOnline = !device.isOnline;
+               
+               if (wasOnline && !device.isOnline) {
+                   dataManager.addNotification({
+                       type: 'warning',
+                       title: `${device.name} mất kết nối`,
+                       message: 'Thiết bị đã mất kết nối với mạng',
+                       icon: device.icon,
+                       deviceId: device.id
+                   });
+               } else if (!wasOnline && device.isOnline) {
+                   dataManager.addNotification({
+                       type: 'success',
+                       title: `${device.name} đã kết nối lại`,
+                       message: 'Thiết bị đã khôi phục kết nối',
+                       icon: device.icon,
+                       deviceId: device.id
+                   });
+               }
+               
+               hasChanges = true;
+           }
+       });
+
+       if (hasChanges) {
+           dataManager.setState('devices', devices);
+       }
+   }
+
+   simulateTemperatureChanges() {
+       const devices = dataManager.getState('devices');
+       
+       devices.forEach(device => {
+           if (!device.isOnline) return;
+           
+           if (device.type === 'water_heater') {
+               this.simulateWaterHeaterTemperature(device);
+           } else if (device.type === 'towel_dryer') {
+               this.simulateTowelDryerTemperature(device);
+           }
+       });
+   }
+
+   simulateWaterHeaterTemperature(device) {
+       const updates = {};
+       
+       if (device.isOn && device.isHeating) {
+           const heatRate = 0.3 + Math.random() * 0.4; // 0.3-0.7°C per 10s
+           const newTemp = Math.min(
+               device.currentWaterTemp + heatRate,
+               device.targetTemperature
+           );
+           
+           updates.currentWaterTemp = parseFloat(newTemp.toFixed(1));
+           
+           if (newTemp >= device.targetTemperature) {
+               updates.isHeating = false;
+               
+               dataManager.addNotification({
+                   type: 'success',
+                   title: 'Đun nước hoàn thành',
+                   message: `Bình nước nóng đã đạt ${device.targetTemperature}°C`,
+                   icon: '✅',
+                   deviceId: device.id
+               });
+           }
+       } else {
+           // Natural cooling
+           const coolRate = 0.05 + Math.random() * 0.05; // 0.05-0.1°C per 10s
+           const roomTemp = 22;
+           const newTemp = Math.max(
+               device.currentWaterTemp - coolRate,
+               roomTemp
+           );
+           
+           updates.currentWaterTemp = parseFloat(newTemp.toFixed(1));
+       }
+       
+       if (Object.keys(updates).length > 0) {
+           dataManager.updateDevice(device.id, updates);
+       }
+   }
+
+   simulateTowelDryerTemperature(device) {
+       if (!device.isOn) return;
+       
+       const updates = {};
+       
+       if (device.mode === 'towel_drying') {
+           const targetTemp = device.targetTemperature;
+           const currentTemp = device.sensors.towel.temperature;
+           
+           if (device.relays.towel_heating_relay.isActive) {
+               const heatRate = 0.2 + Math.random() * 0.3; // 0.2-0.5°C per 10s
+               const newTemp = Math.min(currentTemp + heatRate, targetTemp);
+               updates['sensors.towel.temperature'] = parseFloat(newTemp.toFixed(1));
+               
+               // Update progress
+               const progress = newTemp / targetTemp;
+               const baseTime = 45; // minutes
+               const remaining = Math.max(0, Math.round(baseTime * (1 - progress)));
+               updates.estimatedTimeRemaining = remaining;
+               
+               if (newTemp >= targetTemp) {
+                   // Cycle complete
+                   updates.isOn = false;
+                   updates.cycleComplete = true;
+                   updates.estimatedTimeRemaining = 0;
+                   updates['relays.towel_heating_relay.isActive'] = false;
+                   updates.isHeating = false;
+                   updates.totalCycles = device.totalCycles + 1;
+                   
+                   dataManager.addNotification({
+                       type: 'success',
+                       title: 'Sấy khăn hoàn thành',
+                       message: `Đã đạt ${targetTemp}°C và tự động tắt`,
+                       icon: '✅',
+                       deviceId: device.id
+                   });
                }
            }
-       } else if (command.includes('eco') || command.includes('tiết kiệm')) {
-           dataManager.updateDevice(waterHeater.id, { mode: 'eco' });
-           ui.showToast('Đã chuyển sang chế độ tiết kiệm', 'success');
-       } else if (command.includes('boost') || command.includes('tăng tốc')) {
-           dataManager.updateDevice(waterHeater.id, { mode: 'boost' });
-           ui.showToast('Đã chuyển sang chế độ tăng tốc', 'success');
+       } else if (device.mode === 'room_heating') {
+           // Room heating logic with hysteresis
+           const targetTemp = device.targetTemperature;
+           const currentTemp = device.sensors.room.temperature;
+           const isHeating = device.relays.room_heating_relay.isActive;
+           
+           if (isHeating) {
+               const heatRate = 0.1 + Math.random() * 0.2; // 0.1-0.3°C per 10s
+               const newTemp = Math.min(currentTemp + heatRate, targetTemp + 1);
+               updates['sensors.room.temperature'] = parseFloat(newTemp.toFixed(1));
+               
+               if (newTemp >= targetTemp + 0.5) {
+                   updates['relays.room_heating_relay.isActive'] = false;
+                   updates.isHeating = false;
+               }
+           } else {
+               // Natural cooling
+               const coolRate = 0.05 + Math.random() * 0.05;
+               const newTemp = Math.max(currentTemp - coolRate, 18); // Min 18°C
+               updates['sensors.room.temperature'] = parseFloat(newTemp.toFixed(1));
+               
+               if (newTemp < targetTemp - 0.5) {
+                   updates['relays.room_heating_relay.isActive'] = true;
+                   updates.isHeating = true;
+               }
+           }
+       }
+       
+       if (Object.keys(updates).length > 0) {
+           dataManager.updateDevice(device.id, updates);
        }
    }
 
-   processTowelDryerVoiceCommand(command) {
-       const towelDryers = dataManager.getDevicesByType('towel_dryer');
-       if (towelDryers.length === 0) {
-           ui.showToast('Không tìm thấy máy sấy khăn', 'warning');
-           return;
-       }
-
-       const towelDryer = towelDryers[0];
-
-       if (command.includes('bật') || command.includes('mở')) {
-           dataManager.updateDevice(towelDryer.id, { 
-               isOn: true,
-               mode: 'towel_dry'
+   checkForNotifications() {
+       // Check for high energy consumption
+       const todayEnergy = dataManager.getTotalEnergyToday();
+       const avgEnergy = dataManager.getAverageEnergyConsumption();
+       
+       if (todayEnergy > avgEnergy * 1.4) { // 40% higher than average
+           dataManager.addNotification({
+               type: 'warning',
+               title: 'Tiêu thụ điện cao bất thường',
+               message: `Hôm nay cao hơn 40% so với trung bình (${Utils.formatNumber(todayEnergy, 1)} kWh)`,
+               icon: '⚠️'
            });
-           ui.showToast('Đã bật máy sấy khăn', 'success');
-       } else if (command.includes('tắt') || command.includes('đóng')) {
-           dataManager.updateDevice(towelDryer.id, { isOn: false });
-           ui.showToast('Đã tắt máy sấy khăn', 'success');
+       }
+       
+       // Check for device maintenance
+       this.checkDeviceMaintenance();
+       
+       // Check for firmware updates
+       this.checkFirmwareUpdates();
+   }
+
+   checkDeviceMaintenance() {
+       const devices = dataManager.getState('devices');
+       
+       devices.forEach(device => {
+           const daysSinceCreated = Math.floor(
+               (Date.now() - new Date(device.createdAt).getTime()) / (1000 * 60 * 60 * 24)
+           );
+           
+           // Suggest maintenance after 30 days for water heater
+           if (device.type === 'water_heater' && daysSinceCreated > 30 && daysSinceCreated % 30 === 0) {
+               dataManager.addNotification({
+                   type: 'info',
+                   title: 'Bảo trì thiết bị',
+                   message: `${device.name} nên được bảo trì định kỳ`,
+                   icon: '🔧',
+                   deviceId: device.id
+               });
+           }
+       });
+   }
+
+   checkFirmwareUpdates() {
+       const devices = dataManager.getState('devices');
+       
+       devices.forEach(device => {
+           if (Math.random() < 0.01) { // 1% chance per check
+               dataManager.addNotification({
+                   type: 'info',
+                   title: 'Cập nhật firmware',
+                   message: `Có bản cập nhật mới cho ${device.name}`,
+                   icon: '🔄',
+                   deviceId: device.id,
+                   actions: ['update', 'later']
+               });
+           }
+       });
+   }
+
+   async syncData() {
+       if (!navigator.onLine) return;
+       
+       try {
+           // Simulate data sync
+           console.log('Syncing data with server...');
+           
+           // Upload offline changes
+           await this.uploadOfflineChanges();
+           
+           // Download server updates
+           await this.downloadServerUpdates();
+           
+       } catch (error) {
+           console.warn('Data sync failed:', error);
        }
    }
 
-   processRoomHeatingVoiceCommand(command) {
-       const towelDryers = dataManager.getDevicesByType('towel_dryer');
-       if (towelDryers.length === 0) {
-           ui.showToast('Không tìm thấy thiết bị sưởi', 'warning');
-           return;
-       }
-
-       const towelDryer = towelDryers[0];
-
-       if (command.includes('bật') || command.includes('mở')) {
-           dataManager.updateDevice(towelDryer.id, { 
-               isOn: true,
-               mode: 'room_heating',
-               targetRoomTemperature: 24
-           });
-           ui.showToast('Đã bật sưởi phòng', 'success');
-       } else if (command.includes('tắt') || command.includes('đóng')) {
-           dataManager.updateDevice(towelDryer.id, { isOn: false });
-           ui.showToast('Đã tắt sưởi phòng', 'success');
+   async uploadOfflineChanges() {
+       const offlineChanges = Utils.storage.get('offline_changes', []);
+       
+       if (offlineChanges.length > 0) {
+           // Simulate upload
+           await new Promise(resolve => setTimeout(resolve, 1000));
+           
+           // Clear offline changes after successful upload
+           Utils.storage.remove('offline_changes');
        }
    }
 
-   showErrorScreen(error) {
+   async downloadServerUpdates() {
+       // Simulate checking for server updates
+       await new Promise(resolve => setTimeout(resolve, 500));
+   }
+
+   performanceCleanup() {
+       // Clear old performance entries
+       if (performance.clearResourceTimings) {
+           performance.clearResourceTimings();
+       }
+       
+       // Clear old notifications (keep last 50)
+       const notifications = dataManager.getState('notifications');
+       if (notifications.length > 50) {
+           const recentNotifications = notifications.slice(0, 50);
+           dataManager.setState('notifications', recentNotifications);
+       }
+       
+       // Clear old analytics data (keep last 30 days)
+       const analytics = dataManager.getState('analytics');
+       const thirtyDaysAgo = new Date();
+       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+       
+       Object.keys(analytics).forEach(dateString => {
+           const date = new Date(dateString);
+           if (date < thirtyDaysAgo) {
+               delete analytics[dateString];
+           }
+       });
+       
+       dataManager.setState('analytics', analytics);
+   }
+
+   handleVisibilityChange() {
+       if (document.hidden) {
+           // App goes to background
+           this.onAppHide();
+       } else {
+           // App comes to foreground
+           this.onAppShow();
+       }
+   }
+
+   onAppShow() {
+       if (this.isInitialized) {
+           // Refresh data when app becomes visible
+           this.updateDeviceStatus();
+           ui.updateNotificationBadge();
+           ui.refreshCurrentScreen();
+       }
+   }
+
+   onAppHide() {
+       // Save state when app goes to background
+       dataManager.saveToStorage();
+       
+       // Clear sensitive data if needed
+       this.clearSensitiveData();
+   }
+
+   clearSensitiveData() {
+       // Clear any sensitive data that shouldn't persist in background
+       // (currently none in this app)
+   }
+
+   handlePopState(event) {
+       if (ui.isModalOpen()) {
+           ui.closeModal();
+       } else {
+           // Handle back navigation
+           const state = event.state;
+           if (state?.screen) {
+               ui.showScreen(state.screen);
+           }
+       }
+   }
+
+   async finishInitialization() {
+       // Hide splash screen
+       await new Promise(resolve => {
+           setTimeout(() => {
+               document.getElementById('splash-screen').classList.add('hidden');
+               resolve();
+           }, 500);
+       });
+   }
+
+   handleInitializationError(error) {
+       console.error('App initialization failed:', error);
+       
+       // Show error screen
        document.body.innerHTML = `
            <div class="error-screen">
                <div class="error-content">
                    <div class="error-icon">
                        <span class="material-icons">error</span>
                    </div>
-                   <h2>Đã xảy ra lỗi</h2>
+                   <h2>Khởi động thất bại</h2>
                    <p>Ứng dụng không thể khởi động. Vui lòng thử lại.</p>
-                   <div class="error-details">
-                       <strong>Chi tiết lỗi:</strong>
-                       <pre>${error.message}</pre>
-                   </div>
                    <button class="btn btn-primary" onclick="window.location.reload()">
                        Thử lại
                    </button>
@@ -446,88 +1013,71 @@ class SmartHomeApp {
        `;
    }
 
-   // Data sync functions
-   async syncPendingData() {
-       try {
-           const pendingData = Utils.storage.get('pending_sync_data') || [];
+   showInstallPrompt() {
+       const prompt = document.getElementById('install-prompt');
+       if (prompt && this.installPrompt) {
+           prompt.classList.add('show');
+       }
+   }
+
+   hideInstallPrompt() {
+       const prompt = document.getElementById('install-prompt');
+       if (prompt) {
+           prompt.classList.remove('show');
+       }
+   }
+
+   async installPWA() {
+       if (this.installPrompt) {
+           this.installPrompt.prompt();
+           const result = await this.installPrompt.userChoice;
            
-           for (const data of pendingData) {
-               await this.syncDataToServer(data);
+           if (result.outcome === 'accepted') {
+               console.log('PWA was installed');
            }
            
-           Utils.storage.remove('pending_sync_data');
-           console.log('Synced pending data successfully');
-       } catch (error) {
-           console.error('Failed to sync pending data:', error);
+           this.installPrompt = null;
+           this.hideInstallPrompt();
        }
    }
 
-   async syncDataToServer(data) {
-       // Simulate API call to sync data
-       return new Promise((resolve) => {
-           setTimeout(() => {
-               console.log('Synced data:', data);
-               resolve();
-           }, 1000);
+   dismissInstall() {
+       this.hideInstallPrompt();
+       Utils.storage.set('install_dismissed', true);
+   }
+
+   // Cleanup on app unload
+   destroy() {
+       // Clear intervals
+       if (this.deviceUpdateInterval) clearInterval(this.deviceUpdateInterval);
+       if (this.temperatureInterval) clearInterval(this.temperatureInterval);
+       if (this.notificationInterval) clearInterval(this.notificationInterval);
+       if (this.syncInterval) clearInterval(this.syncInterval);
+       if (this.cleanupInterval) clearInterval(this.cleanupInterval);
+       
+       // Remove event listeners
+       this.eventHandlers.forEach((handler, element) => {
+           element.removeEventListener('click', handler);
        });
-   }
-
-   // Performance monitoring
-   measurePerformance(name, fn) {
-       return Utils.performance.measure(name, fn);
-   }
-
-   // Memory management
-   cleanupResources() {
-       // Clear unused intervals
-       if (this.updateInterval) {
-           clearInterval(this.updateInterval);
-       }
        
-       // Clear automation engine intervals
-       if (dataManager.automationEngine) {
-           dataManager.automationEngine.intervalChecks.forEach((interval, ruleId) => {
-               clearInterval(interval);
-           });
-       }
-       
-       // Save state before cleanup
+       // Save final state
        dataManager.saveToStorage();
-   }
-
-   // App state management
-   onAppPause() {
-       console.log('App paused');
-       this.cleanupResources();
-       dataManager.saveToStorage();
-   }
-
-   onAppResume() {
-       console.log('App resumed');
-       this.setupEnhancedPeriodicUpdates();
-       ui.updateNotificationBadge();
-       ui.refreshCurrentScreen();
-   }
-
-   // Network connectivity handling
-   onNetworkOnline() {
-       console.log('Network online');
-       this.syncPendingData();
-       ui.showToast('Kết nối mạng đã được khôi phục', 'success');
-   }
-
-   onNetworkOffline() {
-       console.log('Network offline');
-       ui.showToast('Đang hoạt động offline', 'warning');
    }
 }
 
-// Authentication Functions
+// Enhanced Authentication Functions
 async function handleLogin(event) {
    event.preventDefault();
    
-   const email = document.getElementById('login-email').value;
+   const email = document.getElementById('login-email').value.trim();
    const password = document.getElementById('login-password').value;
+   const rememberMe = document.getElementById('remember-me').checked;
+   
+   // Validation
+   if (!email || !password) {
+       ui.showToast('Vui lòng nhập đầy đủ thông tin', 'error');
+       return;
+   }
    
    if (!Utils.isValidEmail(email)) {
        ui.showToast('Email không hợp lệ', 'error');
@@ -541,47 +1091,54 @@ async function handleLogin(event) {
        
        const userData = {
            id: Utils.generateId(),
-           name: 'Nguyễn Văn A',
+           name: email.split('@')[0], // Use email prefix as name
            email: email,
            phone: '+84901234567',
            avatar: null,
-           preferences: {
-               language: 'vi',
-               theme: 'auto',
-               notifications: true
-           },
            createdAt: new Date().toISOString()
        };
        
-       Utils.storage.set('auth_token', 'fake_jwt_token_' + Date.now());
+       // Save auth data
+       const authToken = 'jwt_token_' + Date.now() + '_' + Math.random().toString(36);
+       Utils.storage.set('auth_token', authToken);
        Utils.storage.set('user_data', userData);
+       
+       if (rememberMe) {
+           Utils.storage.set('remember_login', true);
+       }
        
        dataManager.setUser(userData);
        
        ui.hideLoading();
        ui.showToast('Đăng nhập thành công!', 'success');
        
+       // Smooth transition to main app
        setTimeout(() => {
            app.showMainApp();
        }, 1000);
        
    } catch (error) {
        ui.hideLoading();
-       ui.showToast('Đăng nhập thất bại. Vui lòng kiểm tra thông tin.', 'error');
+       ui.showToast('Email hoặc mật khẩu không chính xác', 'error');
+       
+       // Focus back to email field
+       document.getElementById('login-email').focus();
    }
 }
 
 async function handleSignup(event) {
    event.preventDefault();
    
-   const name = document.getElementById('signup-name').value;
-   const email = document.getElementById('signup-email').value;
-   const phone = document.getElementById('signup-phone').value;
+   const name = document.getElementById('signup-name').value.trim();
+   const email = document.getElementById('signup-email').value.trim();
+   const phone = document.getElementById('signup-phone').value.trim();
    const password = document.getElementById('signup-password').value;
    const confirmPassword = document.getElementById('signup-confirm').value;
+   const agreeTerms = document.getElementById('agree-terms').checked;
    
-   if (!name.trim()) {
-       ui.showToast('Vui lòng nhập họ tên', 'error');
+   // Enhanced validation
+   if (!name || !email || !phone || !password || !confirmPassword) {
+       ui.showToast('Vui lòng nhập đầy đủ thông tin', 'error');
        return;
    }
    
@@ -597,7 +1154,7 @@ async function handleSignup(event) {
    
    const passwordValidation = Utils.validatePassword(password);
    if (!passwordValidation.isValid) {
-       ui.showToast('Mật khẩu không đủ mạnh', 'error');
+       ui.showToast('Mật khẩu phải có ít nhất 8 ký tự, bao gồm chữ hoa, chữ thường và số', 'error');
        return;
    }
    
@@ -606,27 +1163,39 @@ async function handleSignup(event) {
        return;
    }
    
+   if (!agreeTerms) {
+       ui.showToast('Vui lòng đồng ý với điều khoản sử dụng', 'error');
+       return;
+   }
+   
    ui.showLoading('Đang tạo tài khoản...');
    
    try {
-       await simulateSignup(email, password);
+       await simulateSignup(name, email, phone, password);
        
        ui.hideLoading();
        ui.showToast('Tài khoản đã được tạo thành công!', 'success');
        
-       app.showAuthScreen('login');
+       // Auto-fill login form
+       showAuthScreen('login');
        document.getElementById('login-email').value = email;
+       document.getElementById('login-password').focus();
        
    } catch (error) {
        ui.hideLoading();
-       ui.showToast('Không thể tạo tài khoản. Vui lòng thử lại.', 'error');
+       ui.showToast('Không thể tạo tài khoản. Email có thể đã được sử dụng.', 'error');
    }
 }
 
 async function handleForgotPassword(event) {
    event.preventDefault();
    
-   const email = document.getElementById('forgot-email').value;
+   const email = document.getElementById('forgot-email').value.trim();
+   
+   if (!email) {
+       ui.showToast('Vui lòng nhập email', 'error');
+       return;
+   }
    
    if (!Utils.isValidEmail(email)) {
        ui.showToast('Email không hợp lệ', 'error');
@@ -641,13 +1210,20 @@ async function handleForgotPassword(event) {
        ui.hideLoading();
        ui.showToast('Mã xác nhận đã được gửi!', 'success');
        
+       // Store email for OTP verification
+       Utils.storage.set('reset_email', email);
+       
+       // Show OTP screen
+       showAuthScreen('otp');
        document.getElementById('otp-email').textContent = email;
-       app.showAuthScreen('otp');
        startOTPCountdown();
+       
+       // Focus first OTP input
+       document.querySelector('.otp-input').focus();
        
    } catch (error) {
        ui.hideLoading();
-       ui.showToast('Không thể gửi mã xác nhận. Vui lòng thử lại.', 'error');
+       ui.showToast('Không thể gửi mã xác nhận. Vui lòng kiểm tra email.', 'error');
    }
 }
 
@@ -658,11 +1234,16 @@ async function handleOTP(event) {
    const otp = Array.from(otpInputs).map(input => input.value).join('');
    
    if (otp.length !== 6) {
-       ui.showToast('Vui lòng nhập đầy đủ mã OTP', 'error');
+       ui.showToast('Vui lòng nhập đầy đủ 6 số', 'error');
        return;
    }
    
-   ui.showLoading('Đang xác nhận mã OTP...');
+   if (!/^\d{6}$/.test(otp)) {
+       ui.showToast('Mã OTP chỉ chứa số', 'error');
+       return;
+   }
+   
+   ui.showLoading('Đang xác nhận...');
    
    try {
        await simulateOTPVerification(otp);
@@ -670,25 +1251,114 @@ async function handleOTP(event) {
        ui.hideLoading();
        ui.showToast('Xác nhận thành công!', 'success');
        
-       app.showAuthScreen('login');
+       showAuthScreen('reset-password');
        
    } catch (error) {
        ui.hideLoading();
-       ui.showToast('Mã OTP không chính xác. Vui lòng thử lại.', 'error');
+       ui.showToast('Mã OTP không chính xác', 'error');
+       
+       // Clear OTP inputs and focus first one
+       otpInputs.forEach(input => input.value = '');
+       otpInputs[0].focus();
    }
 }
 
+async function handleResetPassword(event) {
+   event.preventDefault();
+   
+   const password = document.getElementById('reset-password').value;
+   const confirmPassword = document.getElementById('reset-confirm').value;
+   
+   if (!password || !confirmPassword) {
+       ui.showToast('Vui lòng nhập đầy đủ thông tin', 'error');
+       return;
+   }
+   
+   const passwordValidation = Utils.validatePassword(password);
+   if (!passwordValidation.isValid) {
+       ui.showToast('Mật khẩu không đủ mạnh', 'error');
+       return;
+   }
+   
+   if (password !== confirmPassword) {
+       ui.showToast('Xác nhận mật khẩu không khớp', 'error');
+       return;
+   }
+   
+   ui.showLoading('Đang cập nhật mật khẩu...');
+   
+   try {
+       await simulateResetPassword(password);
+       
+       ui.hideLoading();
+       ui.showToast('Mật khẩu đã được cập nhật!', 'success');
+       
+       // Clear stored reset email
+       Utils.storage.remove('reset_email');
+       
+       // Return to login
+       showAuthScreen('login');
+       
+   } catch (error) {
+       ui.hideLoading();
+       ui.showToast('Không thể cập nhật mật khẩu', 'error');
+   }
+}
+
+// Enhanced password strength indicator
+function updatePasswordStrength(password) {
+   const validation = Utils.validatePassword(password);
+   const strengthFill = document.getElementById('password-strength-fill');
+   const strengthText = document.getElementById('password-strength-text');
+   
+   if (!strengthFill || !strengthText) return;
+   
+   let width = 0;
+   let text = 'Nhập mật khẩu';
+   let className = '';
+   
+   if (password.length > 0) {
+       switch (validation.strength) {
+           case 'weak':
+               width = 25;
+               text = 'Yếu';
+               className = 'weak';
+               break;
+           case 'medium':
+               width = 60;
+               text = 'Trung bình';
+               className = 'medium';
+               break;
+           case 'strong':
+               width = 100;
+               text = 'Mạnh';
+               className = 'strong';
+               break;
+       }
+   }
+   
+   strengthFill.style.width = `${width}%`;
+   strengthFill.className = `strength-fill ${className}`;
+   strengthText.textContent = text;
+}
+
+// OTP input handling
 function moveToNext(current, index) {
    if (current.value.length === 1 && index < 5) {
        const nextInput = document.querySelectorAll('.otp-input')[index + 1];
        if (nextInput) {
            nextInput.focus();
        }
+   } else if (current.value.length === 0 && index > 0) {
+       const prevInput = document.querySelectorAll('.otp-input')[index - 1];
+       if (prevInput) {
+           prevInput.focus();
+       }
    }
 }
 
 function startOTPCountdown() {
-   let timeLeft = 45;
+   let timeLeft = 300; // 5 minutes
    const countdownElement = document.getElementById('countdown');
    
    const timer = setInterval(() => {
@@ -699,6 +1369,7 @@ function startOTPCountdown() {
        if (timeLeft === 0) {
            clearInterval(timer);
            countdownElement.textContent = '00:00';
+           ui.showToast('Mã OTP đã hết hạn', 'warning');
        }
        
        timeLeft--;
@@ -706,7 +1377,11 @@ function startOTPCountdown() {
 }
 
 async function resendOTP() {
-   const email = document.getElementById('otp-email').textContent;
+   const email = Utils.storage.get('reset_email');
+   if (!email) {
+       ui.showToast('Không tìm thấy email', 'error');
+       return;
+   }
    
    ui.showLoading('Đang gửi lại mã...');
    
@@ -716,14 +1391,92 @@ async function resendOTP() {
        ui.hideLoading();
        ui.showToast('Mã OTP mới đã được gửi!', 'success');
        
+       // Clear current OTP inputs
+       document.querySelectorAll('.otp-input').forEach(input => input.value = '');
+       document.querySelector('.otp-input').focus();
+       
        startOTPCountdown();
        
    } catch (error) {
        ui.hideLoading();
-       ui.showToast('Không thể gửi lại mã. Vui lòng thử lại.', 'error');
+       ui.showToast('Không thể gửi lại mã', 'error');
    }
 }
 
+// Enhanced simulation functions
+async function simulateLogin(email, password) {
+   return new Promise((resolve, reject) => {
+       setTimeout(() => {
+           // More realistic validation
+           if (email && password.length >= 6) {
+               // Simulate random failures (5% chance)
+               if (Math.random() < 0.05) {
+                   reject(new Error('Login failed'));
+               } else {
+                   resolve({ success: true, user: { email, name: email.split('@')[0] } });
+               }
+           } else {
+               reject(new Error('Invalid credentials'));
+           }
+       }, 1000 + Math.random() * 1000); // 1-2 second delay
+   });
+}
+
+async function simulateSignup(name, email, phone, password) {
+   return new Promise((resolve, reject) => {
+       setTimeout(() => {
+           // Simulate email already exists (10% chance)
+           if (Math.random() < 0.1) {
+               reject(new Error('Email already exists'));
+           } else {
+               resolve({ success: true, user: { name, email, phone } });
+           }
+       }, 1500 + Math.random() * 1000); // 1.5-2.5 second delay
+   });
+}
+
+async function simulateForgotPassword(email) {
+   return new Promise((resolve, reject) => {
+       setTimeout(() => {
+           if (Utils.isValidEmail(email)) {
+               resolve({ success: true });
+           } else {
+               reject(new Error('Invalid email'));
+           }
+       }, 800 + Math.random() * 400); // 0.8-1.2 second delay
+   });
+}
+
+async function simulateOTPVerification(otp) {
+   return new Promise((resolve, reject) => {
+       setTimeout(() => {
+           // Accept any 6-digit OTP for demo, but simulate some failures
+           if (otp.length === 6 && /^\d+$/.test(otp)) {
+               if (Math.random() < 0.1) { // 10% failure rate
+                   reject(new Error('Invalid OTP'));
+               } else {
+                   resolve({ success: true });
+               }
+           } else {
+               reject(new Error('Invalid OTP format'));
+           }
+       }, 600 + Math.random() * 400); // 0.6-1 second delay
+   });
+}
+
+async function simulateResetPassword(password) {
+   return new Promise((resolve, reject) => {
+       setTimeout(() => {
+           if (password.length >= 8) {
+               resolve({ success: true });
+           } else {
+               reject(new Error('Password too weak'));
+           }
+       }, 1000 + Math.random() * 500); // 1-1.5 second delay
+   });
+}
+
+// Enhanced utility functions
 function togglePassword(inputId) {
    const input = document.getElementById(inputId);
    const button = input.nextElementSibling;
@@ -736,334 +1489,249 @@ function togglePassword(inputId) {
        input.type = 'password';
        icon.textContent = 'visibility';
    }
-}
-
-async function loginWithGoogle() {
-   ui.showToast('Tính năng đăng nhập Google đang phát triển', 'info');
-}
-
-function showScreen(screenName) {
-   app.showAuthScreen(screenName);
-}
-
-function goBack() {
-   const currentScreen = document.querySelector('.auth-screen.active');
-   const currentId = currentScreen?.id;
    
-   switch (currentId) {
-       case 'signup-screen':
-       case 'forgot-password-screen':
-           app.showAuthScreen('login');
-           break;
-       case 'otp-screen':
-           app.showAuthScreen('forgot-password');
-           break;
-       default:
-           app.showAuthScreen('login');
-   }
+   // Return focus to input
+   input.focus();
 }
 
-// Simulation Functions
-async function simulateLogin(email, password) {
-   return new Promise((resolve, reject) => {
-       setTimeout(() => {
-           if (email && password.length >= 6) {
-               resolve({ success: true });
-           } else {
-               reject(new Error('Invalid credentials'));
-           }
-       }, 1500);
-   });
-}
-
-async function simulateSignup(email, password) {
-   return new Promise((resolve, reject) => {
-       setTimeout(() => {
-           if (email && password) {
-               resolve({ success: true });
-           } else {
-               reject(new Error('Signup failed'));
-           }
-       }, 2000);
-   });
-}
-
-async function simulateForgotPassword(email) {
-   return new Promise((resolve, reject) => {
-       setTimeout(() => {
-           if (Utils.isValidEmail(email)) {
-               resolve({ success: true });
-           } else {
-               reject(new Error('Invalid email'));
-           }
-       }, 1000);
-   });
-}
-
-async function simulateOTPVerification(otp) {
-   return new Promise((resolve, reject) => {
-       setTimeout(() => {
-           if (otp.length === 6 && /^\d+$/.test(otp)) {
-               resolve({ success: true });
-           } else {
-               reject(new Error('Invalid OTP'));
-           }
-       }, 1000);
-   });
-}
-
-// Error Handling
-window.addEventListener('error', (event) => {
-   Utils.error.log(event.error, 'Global error handler');
-   
-   if (!event.error.message.includes('Network')) {
-       ui.showToast('Đã xảy ra lỗi không mong muốn', 'error');
-   }
-});
-
-window.addEventListener('unhandledrejection', (event) => {
-   Utils.error.log(event.reason, 'Unhandled promise rejection');
-   event.preventDefault();
-});
-
-// Performance Monitoring
-if ('performance' in window) {
-   window.addEventListener('load', () => {
-       setTimeout(() => {
-           const perfData = performance.getEntriesByType('navigation')[0];
-           console.log('App load time:', perfData.loadEventEnd - perfData.fetchStart, 'ms');
-       }, 0);
-   });
-}
-
-// Network Status Monitoring
-window.addEventListener('online', () => {
-   console.log('App is online');
-   if (window.app && window.app.isInitialized) {
-       app.onNetworkOnline();
-   }
-});
-
-window.addEventListener('offline', () => {
-   console.log('App is offline');
-   if (window.app && window.app.isInitialized) {
-       app.onNetworkOffline();
-   }
-});
-
-// App Lifecycle
-document.addEventListener('visibilitychange', () => {
-   if (document.hidden) {
-       if (window.app && window.app.isInitialized) {
-           app.onAppPause();
+function showAuthScreen(screenName) {
+   const screens = document.querySelectorAll('.auth-screen');
+   screens.forEach(screen => {
+       screen.classList.remove('active');
+       // Clear form data when switching screens
+       const form = screen.querySelector('form');
+       if (form) {
+           form.reset();
        }
-       dataManager.saveToStorage();
+   });
+   
+   const targetScreen = document.getElementById(`${screenName}-screen`);
+   if (targetScreen) {
+       targetScreen.classList.add('active');
+       
+       // Focus first input
+       const firstInput = targetScreen.querySelector('input');
+       if (firstInput) {
+           setTimeout(() => firstInput.focus(), 100);
+       }
+   }
+}
+
+// Enhanced device control functions
+function quickHeatWater(temperature) {
+   const waterHeater = dataManager.getState('devices').find(d => d.type === 'water_heater');
+   if (waterHeater) {
+       dataManager.updateDevice(waterHeater.id, {
+           isOn: true,
+           targetTemperature: temperature,
+           isHeating: true,
+           lastAction: new Date().toISOString(),
+           dailyUsage: waterHeater.dailyUsage + 1
+       });
+       
+       ui.showToast(`Đang đun nước đến ${temperature}°C`, 'success');
+       ui.refreshCurrentScreen();
+       
+       app.recordPerformanceMetric('quickAction', performance.now());
    } else {
-       if (window.app && window.app.isInitialized) {
-           app.onAppResume();
-       }
-       if (ui) {
-           ui.updateNotificationBadge();
-       }
+       ui.showToast('Không tìm thấy bình nước nóng', 'error');
    }
-});
+}
 
-// Touch/Click Feedback
-document.addEventListener('touchstart', (e) => {
-   if (e.target.matches('button, .btn, .device-card, .scene-card, .nav-item')) {
-       e.target.style.transform = 'scale(0.95)';
+function quickStartTowelDrying() {
+   const towelDryer = dataManager.getState('devices').find(d => d.type === 'towel_dryer');
+   if (towelDryer) {
+       dataManager.updateDevice(towelDryer.id, {
+           isOn: true,
+           mode: 'towel_drying',
+           targetTemperature: 40,
+           estimatedTimeRemaining: 45,
+           'relays.towel_heating_relay.isActive': true,
+           isHeating: true,
+           cycleComplete: false,
+           lastAction: new Date().toISOString()
+       });
+       
+       ui.showToast('Đã bắt đầu sấy khăn', 'success');
+       ui.refreshCurrentScreen();
+       
+       app.recordPerformanceMetric('quickAction', performance.now());
+   } else {
+       ui.showToast('Không tìm thấy máy sấy khăn', 'error');
    }
-});
+}
 
-document.addEventListener('touchend', (e) => {
-   if (e.target.matches('button, .btn, .device-card, .scene-card, .nav-item')) {
-       setTimeout(() => {
-           e.target.style.transform = '';
-       }, 150);
+function quickStartRoomHeating() {
+   const towelDryer = dataManager.getState('devices').find(d => d.type === 'towel_dryer');
+   if (towelDryer) {
+       dataManager.updateDevice(towelDryer.id, {
+           isOn: true,
+           mode: 'room_heating',
+           targetTemperature: 28,
+           'relays.room_heating_relay.isActive': true,
+           isHeating: true,
+           lastAction: new Date().toISOString()
+       });
+       
+       ui.showToast('Đã bắt đầu sưởi phòng', 'success');
+       ui.refreshCurrentScreen();
+       
+       app.recordPerformanceMetric('quickAction', performance.now());
+   } else {
+       ui.showToast('Không tìm thấy máy sấy khăn', 'error');
    }
-});
+}
 
-// Keyboard Navigation
-document.addEventListener('keydown', (e) => {
-   if (e.key === 'Tab') {
-       document.body.classList.add('keyboard-navigation');
+function runPresetScene(sceneType) {
+   const scenes = dataManager.getState('scenes');
+   let scene = null;
+   
+   switch (sceneType) {
+       case 'bath-ready':
+           scene = scenes.find(s => s.name === 'Chuẩn bị tắm');
+           break;
+       case 'after-bath':
+           scene = scenes.find(s => s.name === 'Sau khi tắm');
+           break;
+       case 'energy-save':
+           scene = scenes.find(s => s.name === 'Tiết kiệm điện đêm');
+           break;
    }
    
-   if (e.key === 'Escape') {
-       if (ui.isModalOpen()) {
-           ui.closeModal();
-       } else if (ui.isVoiceActive) {
-           ui.stopVoiceControl();
-       }
+   if (scene) {
+       dataManager.runScene(scene.id);
+   } else {
+       ui.showToast('Không tìm thấy kịch bản', 'error');
    }
+}
+
+// Enhanced settings functions
+function changeTheme(theme) {
+   app.applyTheme(theme);
+   ui.showToast(`Đã chuyển sang chế độ ${theme === 'light' ? 'sáng' : theme === 'dark' ? 'tối' : 'tự động'}`, 'success');
+}
+
+function refreshDevices() {
+   ui.showLoading('Đang làm mới thiết bị...');
    
-   if (e.ctrlKey || e.metaKey) {
-       switch (e.key) {
-           case '1':
-               e.preventDefault();
-               ui.showScreen('home');
-               break;
-           case '2':
-               e.preventDefault();
-               ui.showScreen('devices');
-               break;
-           case '3':
-               e.preventDefault();
-               ui.showScreen('scenes');
-               break;
-           case '4':
-               e.preventDefault();
-               ui.showScreen('analytics');
-               break;
-           case '5':
-               e.preventDefault();
-               ui.showScreen('settings');
-               break;
+   setTimeout(() => {
+       app.updateDeviceStatus();
+       ui.hideLoading();
+       ui.showToast('Đã làm mới danh sách thiết bị', 'success');
+       ui.refreshCurrentScreen();
+   }, 1000);
+}
+
+function showTerms() {
+   ui.showToast('Điều khoản sử dụng - Tính năng đang phát triển', 'info');
+}
+
+function showPrivacy() {
+   ui.showToast('Chính sách bảo mật - Tính năng đang phát triển', 'info');
+}
+
+function showHelp() {
+   ui.showToast('Hướng dẫn sử dụng - Tính năng đang phát triển', 'info');
+}
+
+function showAbout() {
+   ui.showConfirmation(
+       'Về ứng dụng',
+       'SmartHome IoT v1.2.3\nỨng dụng điều khiển bình nước nóng và máy sấy khăn thông minh.\n\nPhát triển bởi SmartHome Team',
+       null,
+       'info'
+   );
+}
+
+function logout() {
+   ui.showConfirmation(
+       'Đăng xuất',
+       'Bạn có chắc chắn muốn đăng xuất khỏi ứng dụng?',
+       () => {
+           // Clear auth data
+           Utils.storage.remove('auth_token');
+           Utils.storage.remove('user_data');
+           Utils.storage.remove('remember_login');
+           
+           // Clear user data from memory
+           dataManager.logout();
+           
+           // Show success message
+           ui.showToast('Đã đăng xuất thành công', 'success');
+           
+           // Reload app to show login screen
+           setTimeout(() => {
+               window.location.reload();
+           }, 1000);
        }
+   );
+}
+
+// Modal handling
+function closeModalOnOverlayClick(event) {
+   if (event.target === event.currentTarget) {
+       ui.closeModal();
    }
-});
+}
 
-document.addEventListener('mousedown', () => {
-   document.body.classList.remove('keyboard-navigation');
-});
-
-// Initialize App
+// Enhanced initialization with password strength monitoring
 document.addEventListener('DOMContentLoaded', () => {
+   // Initialize password strength indicator
+   const passwordInput = document.getElementById('signup-password');
+   if (passwordInput) {
+       passwordInput.addEventListener('input', (e) => {
+           updatePasswordStrength(e.target.value);
+       });
+   }
+   
+   // Setup OTP input handlers
+   document.querySelectorAll('.otp-input').forEach((input, index) => {
+       input.addEventListener('input', (e) => {
+           moveToNext(e.target, index);
+       });
+       
+       input.addEventListener('keydown', (e) => {
+           if (e.key === 'Backspace' && e.target.value === '' && index > 0) {
+               document.querySelectorAll('.otp-input')[index - 1].focus();
+           }
+       });
+   });
+   
+   // Initialize the app
    window.app = new SmartHomeApp();
 });
 
-// Service Worker Registration
-if ('serviceWorker' in navigator) {
-   window.addEventListener('load', async () => {
-       try {
-           const registration = await navigator.serviceWorker.register('/js/sw.js');
-           console.log('SW registered: ', registration);
-           
-           registration.addEventListener('updatefound', () => {
-               const newWorker = registration.installing;
-               newWorker.addEventListener('statechange', () => {
-                   if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                       ui.showToast('Phiên bản mới có sẵn. Tải lại để cập nhật?', 'info');
-                   }
-               });
-           });
-           
-       } catch (error) {
-           console.log('SW registration failed: ', error);
-       }
-   });
-}
-
-// PWA Installation
-let deferredPrompt;
-
-window.addEventListener('beforeinstallprompt', (e) => {
-   e.preventDefault();
-   deferredPrompt = e;
-   
-   if (ui) {
-       ui.installPrompt = e;
-       ui.showInstallPrompt();
+// Handle app cleanup on unload
+window.addEventListener('beforeunload', () => {
+   if (window.app) {
+       window.app.destroy();
    }
 });
 
-window.addEventListener('appinstalled', () => {
-   console.log('PWA was installed');
-   if (ui) {
-       ui.hideInstallPrompt();
-       ui.showToast('Ứng dụng đã được cài đặt thành công!', 'success');
-   }
-});
-
-// Background sync for offline functionality
-if ('serviceWorker' in navigator && 'sync' in window.ServiceWorkerRegistration.prototype) {
-   navigator.serviceWorker.ready.then((registration) => {
-       // Register for background sync when data changes
-       dataManager.subscribe('devices', () => {
-           registration.sync.register('sync-device-data');
-       });
-       
-       dataManager.subscribe('scenes', () => {
-           registration.sync.register('sync-scene-data');
-       });
-   });
-}
-
-// Push notifications
-if ('serviceWorker' in navigator && 'PushManager' in window) {
-   navigator.serviceWorker.ready.then(async (registration) => {
-       try {
-           const subscription = await registration.pushManager.subscribe({
-               userVisibleOnly: true,
-               applicationServerKey: 'your-vapid-public-key-here'
-           });
-           
-           console.log('Push subscription:', subscription);
-           // Send subscription to server
-       } catch (error) {
-           console.log('Failed to subscribe to push notifications:', error);
-       }
-   });
-}
-
-// Expose global functions for development/debugging
+// Expose functions globally for development
 if (process.env.NODE_ENV === 'development') {
    window.dev = {
+       app: () => window.app,
        dataManager,
        ui,
-       app: () => window.app,
        utils: Utils,
-       simulateDeviceChange: (deviceId) => {
+       simulateDeviceAction: (deviceId, action) => {
            const device = dataManager.getState('devices').find(d => d.id === deviceId);
            if (device) {
                dataManager.updateDevice(deviceId, { 
-                   isOn: !device.isOn,
+                   isOn: action === 'on',
                    lastAction: new Date().toISOString()
                });
                ui.refreshCurrentScreen();
            }
        },
-       addTestNotification: () => {
+       addTestNotification: (type = 'info') => {
            dataManager.addNotification({
-               type: 'info',
+               type,
                title: 'Test Notification',
                message: 'This is a test notification for development',
                icon: '🧪'
            });
-       },
-       addTestWaterHeater: () => {
-           const rooms = dataManager.getCurrentHome()?.rooms || [];
-           const bathroomRoom = rooms.find(r => r.type === 'bathroom') || rooms[0];
-           
-           const waterHeater = dataManager.addDeviceWithAutomation({
-               name: 'Bình nóng lạnh Test',
-               type: 'water_heater',
-               icon: '🔥',
-               roomId: bathroomRoom?.id
-           });
-           
-           ui.refreshCurrentScreen();
-           return waterHeater;
-       },
-       addTestTowelDryer: () => {
-           const rooms = dataManager.getCurrentHome()?.rooms || [];
-           const bathroomRoom = rooms.find(r => r.type === 'bathroom') || rooms[0];
-           
-           const towelDryer = dataManager.addDeviceWithAutomation({
-               name: 'Máy sấy khăn Test',
-               type: 'towel_dryer',
-               icon: '🧻',
-               roomId: bathroomRoom?.id
-           });
-           
-           ui.refreshCurrentScreen();
-           return towelDryer;
-       },
-       triggerAutomation: (ruleId) => {
-           const rule = dataManager.getState('automationRules').find(r => r.id === ruleId);
-           if (rule) {
-               dataManager.automationEngine.executeRule(rule);
-           }
        },
        clearAllData: () => {
            if (confirm('Clear all app data? This cannot be undone.')) {
@@ -1071,16 +1739,7 @@ if (process.env.NODE_ENV === 'development') {
                window.location.reload();
            }
        },
-       generateEnergyData: () => {
-           dataManager.generateSampleAnalytics();
-           ui.refreshCurrentScreen();
-       },
-       simulateOfflineMode: () => {
-           window.dispatchEvent(new Event('offline'));
-       },
-       simulateOnlineMode: () => {
-           window.dispatchEvent(new Event('online'));
-       }
+       performanceMetrics: () => window.app.performanceMetrics
    };
 }
 
@@ -1088,8 +1747,10 @@ if (process.env.NODE_ENV === 'development') {
 if (typeof module !== 'undefined' && module.exports) {
    module.exports = {
        SmartHomeApp,
-       DataManager,
-       UI,
-       Utils
+       handleLogin,
+       handleSignup,
+       handleForgotPassword,
+       handleOTP,
+       handleResetPassword
    };
 }

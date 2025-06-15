@@ -9,10 +9,13 @@ class DataManager {
             scenes: [],
             notifications: [],
             analytics: {},
+            automationRules: [],
+            deviceInteractions: [],
             settings: this.getDefaultSettings()
         };
         
         this.listeners = new Map();
+        this.automationEngine = new AutomationEngine(this);
         this.loadFromStorage();
     }
 
@@ -53,6 +56,18 @@ class DataManager {
                 devices: true,
                 wifiOnly: true,
                 whileCharging: false
+            },
+            energy: {
+                costPerKwh: 3000, // VND per kWh
+                currency: 'VND',
+                alertThreshold: 150, // % of average
+                savingsGoal: 20 // % reduction target
+            },
+            automation: {
+                enabled: true,
+                learningMode: true,
+                aggressiveOptimization: false,
+                maintenanceReminders: true
             }
         };
     }
@@ -85,7 +100,6 @@ class DataManager {
         }
         this.listeners.get(key).push(callback);
         
-        // Return unsubscribe function
         return () => {
             const callbacks = this.listeners.get(key);
             if (callbacks) {
@@ -146,7 +160,6 @@ class DataManager {
         homes.push(newHome);
         this.setState('homes', homes);
         
-        // Set as current home if it's the first one
         if (homes.length === 1) {
             this.setCurrentHome(newHome.id);
         }
@@ -165,7 +178,6 @@ class DataManager {
         const homes = this.getState('homes').filter(home => home.id !== homeId);
         this.setState('homes', homes);
         
-        // If deleted home was current, switch to first available
         if (this.getCurrentHome()?.id === homeId && homes.length > 0) {
             this.setCurrentHome(homes[0].id);
         }
@@ -215,7 +227,6 @@ class DataManager {
             const rooms = home.rooms.filter(room => room.id !== roomId);
             this.updateHome(homeId, { rooms });
             
-            // Also remove devices in this room
             const devices = this.getState('devices').filter(device => device.roomId !== roomId);
             this.setState('devices', devices);
         }
@@ -223,7 +234,6 @@ class DataManager {
 
     // Device management
     async loadDevicesForHome(homeId) {
-        // Simulate API call
         const devices = this.generateSampleDevices(homeId);
         this.setState('devices', devices);
     }
@@ -244,20 +254,36 @@ class DataManager {
         return newDevice;
     }
 
+    addDeviceWithAutomation(deviceData) {
+        const newDevice = this.addDevice(deviceData);
+        this.setupDeviceAutomation(newDevice);
+        return newDevice;
+    }
+
     updateDevice(deviceId, updates) {
+        const device = this.getState('devices').find(d => d.id === deviceId);
+        const oldState = { ...device };
+        
         const devices = this.getState('devices').map(device =>
             device.id === deviceId 
                 ? { ...device, ...updates, lastUpdated: new Date().toISOString() }
                 : device
         );
         this.setState('devices', devices);
+        
+        // Trigger automation rules
+        this.automationEngine.processDeviceStateChange(deviceId, oldState, updates);
+        
+        // Simulate device interaction
+        if (updates.isOn !== undefined) {
+            this.simulateDeviceInteraction(deviceId, updates.isOn ? 'turn_on' : 'turn_off');
+        }
     }
 
     deleteDevice(deviceId) {
         const devices = this.getState('devices').filter(device => device.id !== deviceId);
         this.setState('devices', devices);
         
-        // Remove from scenes
         const scenes = this.getState('scenes').map(scene => ({
             ...scene,
             actions: scene.actions.filter(action => action.deviceId !== deviceId)
@@ -273,7 +299,6 @@ class DataManager {
                 lastAction: new Date().toISOString()
             });
             
-            // Add to analytics
             this.recordDeviceAction(deviceId, device.isOn ? 'off' : 'on');
         }
     }
@@ -282,8 +307,53 @@ class DataManager {
         return this.getState('devices').filter(device => device.roomId === roomId);
     }
 
+    getDevicesByType(type) {
+        return this.getState('devices').filter(device => device.type === type);
+    }
+
     getFavoriteDevices() {
         return this.getState('devices').filter(device => device.isFavorite);
+    }
+
+    getLinkedDevices(deviceId) {
+        const device = this.getState('devices').find(d => d.id === deviceId);
+        if (!device || !device.linkedDevices) return [];
+        
+        return device.linkedDevices.map(id => 
+            this.getState('devices').find(d => d.id === id)
+        ).filter(d => d);
+    }
+
+    linkDevices(device1Id, device2Id) {
+        const device1 = this.getState('devices').find(d => d.id === device1Id);
+        const device2 = this.getState('devices').find(d => d.id === device2Id);
+        
+        if (!device1 || !device2) return;
+
+        const linkedDevices1 = device1.linkedDevices || [];
+        if (!linkedDevices1.includes(device2Id)) {
+            linkedDevices1.push(device2Id);
+            this.updateDevice(device1Id, { linkedDevices: linkedDevices1 });
+        }
+
+        const linkedDevices2 = device2.linkedDevices || [];
+        if (!linkedDevices2.includes(device1Id)) {
+            linkedDevices2.push(device1Id);
+            this.updateDevice(device2Id, { linkedDevices: linkedDevices2 });
+        }
+    }
+
+    unlinkDevices(device1Id, device2Id) {
+        const device1 = this.getState('devices').find(d => d.id === device1Id);
+        const device2 = this.getState('devices').find(d => d.id === device2Id);
+        
+        if (!device1 || !device2) return;
+
+        const linkedDevices1 = (device1.linkedDevices || []).filter(id => id !== device2Id);
+        this.updateDevice(device1Id, { linkedDevices: linkedDevices1 });
+
+        const linkedDevices2 = (device2.linkedDevices || []).filter(id => id !== device1Id);
+        this.updateDevice(device2Id, { linkedDevices: linkedDevices2 });
     }
 
     // Scene management
@@ -294,7 +364,7 @@ class DataManager {
             ...sceneData,
             homeId: this.getCurrentHome()?.id,
             createdAt: new Date().toISOString(),
-            isActive: sceneData.isActive || true,
+            isActive: sceneData.isActive !== undefined ? sceneData.isActive : true,
             lastRun: null
         };
         scenes.push(newScene);
@@ -302,75 +372,231 @@ class DataManager {
         return newScene;
     }
 
-updateScene(sceneId, updates) {
-       const scenes = this.getState('scenes').map(scene =>
-           scene.id === sceneId 
-               ? { ...scene, ...updates, updatedAt: new Date().toISOString() }
-               : scene
+    updateScene(sceneId, updates) {
+        const scenes = this.getState('scenes').map(scene =>
+            scene.id === sceneId 
+                ? { ...scene, ...updates, updatedAt: new Date().toISOString() }
+                : scene
+        );
+        this.setState('scenes', scenes);
+    }
+
+    deleteScene(sceneId) {
+        const scenes = this.getState('scenes').filter(scene => scene.id !== sceneId);
+        this.setState('scenes', scenes);
+    }
+
+    async runScene(sceneId) {
+        const scene = this.getState('scenes').find(s => s.id === sceneId);
+        if (!scene || !scene.isActive) return;
+
+        try {
+            for (const action of scene.actions) {
+                await this.executeSceneAction(action);
+            }
+
+            this.updateScene(sceneId, { lastRun: new Date().toISOString() });
+            
+            this.addNotification({
+                type: 'success',
+                title: 'Kịch bản hoàn thành',
+                message: `Kịch bản "${scene.name}" đã được thực hiện thành công`,
+                icon: scene.icon || '🏠'
+            });
+
+        } catch (error) {
+            Utils.error.handle(error, 'Không thể thực hiện kịch bản');
+        }
+    }
+
+    async executeSceneAction(action) {
+        const device = this.getState('devices').find(d => d.id === action.deviceId);
+        if (!device) return;
+
+        await new Promise(resolve => setTimeout(resolve, 200));
+
+        const updates = { lastAction: new Date().toISOString() };
+
+        switch (action.type) {
+            case 'toggle':
+                updates.isOn = action.value;
+                break;
+            case 'brightness':
+                updates.brightness = action.value;
+                break;
+            case 'temperature':
+                updates.targetTemperature = action.value;
+                break;
+            case 'color':
+                updates.color = action.value;
+                break;
+            case 'mode':
+                updates.mode = action.value;
+                break;
+        }
+
+        this.updateDevice(action.deviceId, updates);
+        this.recordDeviceAction(action.deviceId, action.type, action.value);
+    }
+
+    // Automation Rules
+    setupDeviceAutomation(device) {
+        switch (device.type) {
+            case 'water_heater':
+                this.setupWaterHeaterAutomation(device);
+                break;
+            case 'towel_dryer':
+                this.setupTowelDryerAutomation(device);
+                break;
+        }
+    }
+
+    setupWaterHeaterAutomation(waterHeater) {
+        const towelDryer = this.getState('devices').find(d => 
+            d.type === 'towel_dryer' && d.roomId === waterHeater.roomId
+        );
+
+        if (towelDryer) {
+            this.addAutomationRule({
+                id: Utils.generateId(),
+                name: 'Bình nóng lạnh - Máy sấy khăn tự động',
+                description: 'Khi bình nóng lạnh tắt, máy sấy khăn sẽ bật chế độ sấy khăn',
+                trigger: {
+                    type: 'device_state_change',
+                    deviceId: waterHeater.id,
+                    property: 'isOn',
+                    value: false
+                },
+                conditions: [
+                    {
+                        deviceId: towelDryer.id,
+                        property: 'isOnline',
+                        operator: 'equals',
+                        value: true
+                    }
+                ],
+                actions: [
+                    {
+                        type: 'device_control',
+                        deviceId: towelDryer.id,
+                        property: 'isOn',
+                        value: true
+                    },
+                    {
+                        type: 'device_control',
+                        deviceId: towelDryer.id,
+                        property: 'mode',
+                        value: 'towel_dry'
+                    },
+                    {
+                        type: 'device_control',
+                        deviceId: towelDryer.id,
+                        property: 'targetTemperature',
+                        value: 45
+                    }
+                ],
+                isActive: true,
+                createdAt: new Date().toISOString()
+            });
+        }
+    }
+
+    setupTowelDryerAutomation(towelDryer) {
+        // Rule 1: Auto turn off when target temperature reached (towel dry mode)
+        this.addAutomationRule({
+            id: Utils.generateId(),
+            name: 'Máy sấy khăn - Tự động tắt khi sấy xong',
+            description: 'Tắt máy sấy khăn khi đạt nhiệt độ mục tiêu trong chế độ sấy khăn',
+            trigger: {
+                type: 'device_temperature_reached',
+                deviceId: towelDryer.id,
+                property: 'currentTemperature',
+                targetProperty: 'targetTemperature'
+            },
+            conditions: [
+                {
+                    deviceId: towelDryer.id,
+                    property: 'mode',
+                    operator: 'equals',
+                    value: 'towel_dry'
+                },
+                {
+                    deviceId: towelDryer.id,
+                    property: 'isOn',
+                    operator: 'equals',
+                    value: true
+                }
+            ],
+            actions: [
+                {
+                    type: 'device_control',
+                    deviceId: towelDryer.id,
+                    property: 'isOn',
+                    value: false
+                },
+                {
+                    type: 'notification',
+                    title: 'Sấy khăn hoàn thành',
+                    message: 'Máy sấy khăn đã đạt nhiệt độ mục tiêu và tự động tắt',
+                    icon: '🔥'
+                }
+            ],
+            isActive: true,
+            createdAt: new Date().toISOString()
+        });
+
+        // Rule 2: Room heating continuous operation
+        this.addAutomationRule({
+            id: Utils.generateId(),
+            name: 'Máy sấy khăn - Duy trì nhiệt độ phòng',
+            description: 'Duy trì nhiệt độ phòng ở chế độ sưởi phòng',
+            trigger: {
+                type: 'device_temperature_check',
+                deviceId: towelDryer.id,
+                interval: 30000
+            },
+            conditions: [
+                {
+                    deviceId: towelDryer.id,
+                    property: 'mode',
+                    operator: 'equals',
+                    value: 'room_heating'
+                }
+            ],
+            actions: [
+                {
+                    type: 'temperature_control',
+                    deviceId: towelDryer.id,
+                    logic: 'maintain_temperature'
+                }
+            ],
+            isActive: true,
+            createdAt: new Date().toISOString()
+        });
+    }
+
+    addAutomationRule(rule) {
+        const rules = [...this.getState('automationRules')];
+        rules.push(rule);
+        this.setState('automationRules', rules);
+        
+        this.automationEngine.registerRule(rule);
+    }
+
+    updateAutomationRule(ruleId, updates) {
+       const rules = this.getState('automationRules').map(rule =>
+           rule.id === ruleId 
+               ? { ...rule, ...updates, updatedAt: new Date().toISOString() }
+               : rule
        );
-       this.setState('scenes', scenes);
+       this.setState('automationRules', rules);
    }
 
-   deleteScene(sceneId) {
-       const scenes = this.getState('scenes').filter(scene => scene.id !== sceneId);
-       this.setState('scenes', scenes);
-   }
-
-   async runScene(sceneId) {
-       const scene = this.getState('scenes').find(s => s.id === sceneId);
-       if (!scene || !scene.isActive) return;
-
-       try {
-           // Execute scene actions
-           for (const action of scene.actions) {
-               await this.executeSceneAction(action);
-           }
-
-           // Update last run time
-           this.updateScene(sceneId, { lastRun: new Date().toISOString() });
-           
-           // Add notification
-           this.addNotification({
-               type: 'success',
-               title: 'Kịch bản hoàn thành',
-               message: `Kịch bản "${scene.name}" đã được thực hiện thành công`,
-               icon: scene.icon || '🏠'
-           });
-
-       } catch (error) {
-           Utils.error.handle(error, 'Không thể thực hiện kịch bản');
-       }
-   }
-
-   async executeSceneAction(action) {
-       const device = this.getState('devices').find(d => d.id === action.deviceId);
-       if (!device) return;
-
-       // Simulate device control delay
-       await new Promise(resolve => setTimeout(resolve, 200));
-
-       const updates = { lastAction: new Date().toISOString() };
-
-       switch (action.type) {
-           case 'toggle':
-               updates.isOn = action.value;
-               break;
-           case 'brightness':
-               updates.brightness = action.value;
-               break;
-           case 'temperature':
-               updates.temperature = action.value;
-               break;
-           case 'color':
-               updates.color = action.value;
-               break;
-           case 'mode':
-               updates.mode = action.value;
-               break;
-       }
-
-       this.updateDevice(action.deviceId, updates);
-       this.recordDeviceAction(action.deviceId, action.type, action.value);
+   deleteAutomationRule(ruleId) {
+       const rules = this.getState('automationRules').filter(rule => rule.id !== ruleId);
+       this.setState('automationRules', rules);
+       
+       this.automationEngine.unregisterRule(ruleId);
    }
 
    // Notification management
@@ -382,19 +608,67 @@ updateScene(sceneId, updates) {
            timestamp: new Date().toISOString(),
            isRead: false
        };
-       notifications.unshift(newNotification); // Add to beginning
+       notifications.unshift(newNotification);
        
-       // Keep only last 100 notifications
        if (notifications.length > 100) {
            notifications.splice(100);
        }
        
        this.setState('notifications', notifications);
-       
-       // Show system notification if permitted
        this.showSystemNotification(newNotification);
        
        return newNotification;
+   }
+
+   addSmartNotification(type, deviceId, data = {}) {
+       const device = this.getState('devices').find(d => d.id === deviceId);
+       if (!device) return;
+
+       let notification = {
+           type: 'info',
+           icon: device.icon,
+           ...data
+       };
+
+       switch (type) {
+           case 'temperature_reached':
+               notification = {
+                   ...notification,
+                   type: 'success',
+                   title: `${device.name} đạt nhiệt độ mục tiêu`,
+                   message: `Nhiệt độ hiện tại: ${device.currentTemperature}°C`
+               };
+               break;
+
+           case 'energy_high':
+               notification = {
+                   ...notification,
+                   type: 'warning',
+                   title: 'Tiêu thụ điện cao',
+                   message: `${device.name} đang tiêu thụ nhiều điện năng hơn bình thường`
+               };
+               break;
+
+           case 'maintenance_reminder':
+               notification = {
+                   ...notification,
+                   type: 'info',
+                   title: 'Nhắc nhở bảo trì',
+                   message: `${device.name} cần được kiểm tra bảo trì định kỳ`
+               };
+               break;
+
+           case 'automation_executed':
+               notification = {
+                   ...notification,
+                   type: 'success',
+                   title: 'Tự động thực hiện',
+                   message: `${device.name} đã được điều khiển tự động`
+               };
+               break;
+       }
+
+       this.addNotification(notification);
    }
 
    markNotificationAsRead(notificationId) {
@@ -492,6 +766,10 @@ updateScene(sceneId, updates) {
        switch (period) {
            case 'today':
                return this.calculateDayEnergy(today.toDateString());
+           case 'yesterday':
+               const yesterday = new Date(today);
+               yesterday.setDate(yesterday.getDate() - 1);
+               return this.calculateDayEnergy(yesterday.toDateString());
            case 'week':
                return this.calculateWeekEnergy(today);
            case 'month':
@@ -499,6 +777,34 @@ updateScene(sceneId, updates) {
            default:
                return { total: 0, devices: {}, hourly: [] };
        }
+   }
+
+   getDetailedEnergyData(period = 'today') {
+       const energyData = this.getEnergyData(period);
+       const devices = this.getState('devices');
+       
+       const deviceDetails = Object.entries(energyData.devices).map(([deviceId, consumption]) => {
+           const device = devices.find(d => d.id === deviceId);
+           if (!device) return null;
+           
+           const cost = consumption * this.getState('settings').energy.costPerKwh;
+           const percentage = (consumption / energyData.total) * 100;
+           
+           return {
+               device,
+               consumption,
+               cost,
+               percentage: Math.round(percentage * 10) / 10
+           };
+       }).filter(item => item !== null)
+         .sort((a, b) => b.consumption - a.consumption);
+
+       return {
+           ...energyData,
+           deviceDetails,
+           totalCost: energyData.total * this.getState('settings').energy.costPerKwh,
+           averageHourly: energyData.total / 24
+       };
    }
 
    calculateDayEnergy(dateString) {
@@ -562,16 +868,14 @@ updateScene(sceneId, updates) {
    }
 
    generateHourlyData(dateString) {
-       // Generate sample hourly energy data
        const hourlyData = [];
        for (let hour = 0; hour < 24; hour++) {
            let consumption = 0;
            
-           // Simulate realistic energy consumption patterns
-           if (hour >= 6 && hour <= 8) consumption = Math.random() * 3 + 2; // Morning peak
-           else if (hour >= 18 && hour <= 22) consumption = Math.random() * 4 + 3; // Evening peak
-           else if (hour >= 9 && hour <= 17) consumption = Math.random() * 2 + 1; // Day usage
-           else consumption = Math.random() * 1 + 0.5; // Night usage
+           if (hour >= 6 && hour <= 8) consumption = Math.random() * 3 + 2;
+           else if (hour >= 18 && hour <= 22) consumption = Math.random() * 4 + 3;
+           else if (hour >= 9 && hour <= 17) consumption = Math.random() * 2 + 1;
+           else consumption = Math.random() * 1 + 0.5;
            
            hourlyData.push({ hour, consumption: parseFloat(consumption.toFixed(2)) });
        }
@@ -579,52 +883,36 @@ updateScene(sceneId, updates) {
        return hourlyData;
    }
 
-   // AI Suggestions
-   generateAISuggestions() {
-       const devices = this.getState('devices');
-       const analytics = this.getState('analytics');
-       const suggestions = [];
+   calculateHourlyConsumption(device) {
+       const basePower = {
+           'water_heater': 2.5,
+           'towel_dryer': 0.8,
+           'ac': 1.5,
+           'light': 0.01,
+           'tv': 0.15,
+           'socket': 0.1
+       };
 
-       // Energy saving suggestions
-       if (this.getTotalEnergyToday() > this.getAverageEnergyConsumption() * 1.2) {
-           suggestions.push({
-               id: Utils.generateId(),
-               type: 'energy',
-               title: 'Tiết kiệm điện năng',
-               description: 'Mức tiêu thụ hôm nay cao hơn 20% so với trung bình. Tạo kịch bản tối ưu?',
-               action: 'create_energy_scene',
-               priority: 'high'
-           });
+       let power = basePower[device.type] || 0.1;
+
+       if (device.type === 'water_heater') {
+           switch (device.mode) {
+               case 'eco':
+                   power *= 0.7;
+                   break;
+               case 'boost':
+                   power *= 1.3;
+                   break;
+           }
        }
 
-       // Device automation suggestions
-       const frequentDevices = this.getFrequentlyUsedDevices();
-       if (frequentDevices.length > 0) {
-           suggestions.push({
-               id: Utils.generateId(),
-               type: 'automation',
-               title: 'Tự động hóa thông minh',
-               description: `Bạn thường bật ${frequentDevices[0].name} vào lúc này. Tạo lịch trình tự động?`,
-               action: 'create_schedule',
-               deviceId: frequentDevices[0].id,
-               priority: 'medium'
-           });
+       if (device.type === 'towel_dryer') {
+           if (device.mode === 'room_heating') {
+               power *= 1.2;
+           }
        }
 
-       // Security suggestions
-       const offlineDevices = devices.filter(d => !d.isOnline);
-       if (offlineDevices.length > 0) {
-           suggestions.push({
-               id: Utils.generateId(),
-               type: 'security',
-               title: 'Kiểm tra thiết bị',
-               description: `${offlineDevices.length} thiết bị đang offline. Kiểm tra kết nối?`,
-               action: 'check_devices',
-               priority: 'high'
-           });
-       }
-
-       return suggestions;
+       return power;
    }
 
    getTotalEnergyToday() {
@@ -660,7 +948,294 @@ updateScene(sceneId, updates) {
            .sort((a, b) => (deviceUsage[b.id] || 0) - (deviceUsage[a.id] || 0));
    }
 
+   // AI Suggestions
+   generateAISuggestions() {
+       const devices = this.getState('devices');
+       const analytics = this.getState('analytics');
+       const suggestions = [];
+
+       if (this.getTotalEnergyToday() > this.getAverageEnergyConsumption() * 1.2) {
+           suggestions.push({
+               id: Utils.generateId(),
+               type: 'energy',
+               title: 'Tiết kiệm điện năng',
+               description: 'Mức tiêu thụ hôm nay cao hơn 20% so với trung bình. Tạo kịch bản tối ưu?',
+               action: 'create_energy_scene',
+               priority: 'high'
+           });
+       }
+
+       const frequentDevices = this.getFrequentlyUsedDevices();
+       if (frequentDevices.length > 0) {
+           suggestions.push({
+               id: Utils.generateId(),
+               type: 'automation',
+               title: 'Tự động hóa thông minh',
+               description: `Bạn thường bật ${frequentDevices[0].name} vào lúc này. Tạo lịch trình tự động?`,
+               action: 'create_schedule',
+               deviceId: frequentDevices[0].id,
+               priority: 'medium'
+           });
+       }
+
+       const offlineDevices = devices.filter(d => !d.isOnline);
+       if (offlineDevices.length > 0) {
+           suggestions.push({
+               id: Utils.generateId(),
+               type: 'security',
+               title: 'Kiểm tra thiết bị',
+               description: `${offlineDevices.length} thiết bị đang offline. Kiểm tra kết nối?`,
+               action: 'check_devices',
+               priority: 'high'
+           });
+       }
+
+       return suggestions;
+   }
+
+   generateSmartSuggestions() {
+       const suggestions = [];
+       const devices = this.getState('devices');
+       const energyData = this.getDetailedEnergyData('today');
+       
+       const waterHeaters = devices.filter(d => d.type === 'water_heater');
+       waterHeaters.forEach(device => {
+           const deviceEnergy = energyData.deviceDetails.find(d => d.device.id === device.id);
+           
+           if (deviceEnergy && deviceEnergy.percentage > 30) {
+               suggestions.push({
+                   type: 'energy_saving',
+                   title: 'Tiết kiệm điện bình nóng lạnh',
+                   message: `${device.name} đang tiêu thụ ${deviceEnergy.percentage}% tổng điện năng. Khuyến nghị sử dụng chế độ ECO hoặc giảm nhiệt độ mục tiêu.`,
+                   action: 'optimize_water_heater',
+                   deviceId: device.id,
+                   priority: 'high'
+               });
+           }
+
+           if (device.targetTemperature > 65) {
+               suggestions.push({
+                   type: 'temperature_optimization',
+                   title: 'Tối ưu nhiệt độ nước',
+                   message: `Nhiệt độ ${device.targetTemperature}°C có thể quá cao. Giảm xuống 60°C có thể tiết kiệm 15% điện năng.`,
+                   action: 'reduce_temperature',
+                   deviceId: device.id,
+                   priority: 'medium'
+               });
+           }
+       });
+
+       const towelDryers = devices.filter(d => d.type === 'towel_dryer');
+       towelDryers.forEach(device => {
+           if (!device.smartAutomation) {
+               suggestions.push({
+                   type: 'automation',
+                   title: 'Bật tự động thông minh',
+                   message: `Bật tính năng tự động cho ${device.name} để tối ưu hóa hoạt động với bình nóng lạnh.`,
+                   action: 'enable_smart_automation',
+                   deviceId: device.id,
+                   priority: 'medium'
+               });
+           }
+       });
+
+       const currentHour = new Date().getHours();
+       if (currentHour >= 22 || currentHour <= 6) {
+           const activeDevices = devices.filter(d => d.isOn && d.type !== 'security');
+           if (activeDevices.length > 0) {
+               suggestions.push({
+                   type: 'schedule',
+                   title: 'Chế độ đêm',
+                   message: `Phát hiện ${activeDevices.length} thiết bị đang hoạt động vào ban đêm. Tạo lịch trình tự động tắt?`,
+                   action: 'create_night_schedule',
+                   priority: 'low'
+               });
+           }
+       }
+
+       return suggestions;
+   }
+
+   // Device interaction simulation
+   simulateDeviceInteraction(triggerDeviceId, action) {
+       const device = this.getState('devices').find(d => d.id === triggerDeviceId);
+       if (!device) return;
+
+       if (device.type === 'water_heater' && action === 'turn_off') {
+           const linkedTowelDryer = this.getLinkedDevices(triggerDeviceId)
+               .find(d => d.type === 'towel_dryer');
+           
+           if (linkedTowelDryer && linkedTowelDryer.smartAutomation) {
+               setTimeout(() => {
+                   this.updateDevice(linkedTowelDryer.id, {
+                       isOn: true,
+                       mode: 'towel_dry',
+                       targetTemperature: 45
+                   });
+                   
+                   this.addNotification({
+                       type: 'info',
+                       title: 'Tự động bật máy sấy khăn',
+                       message: `${linkedTowelDryer.name} đã tự động bật ở chế độ sấy khăn`,
+                       icon: '🧻'
+                   });
+               }, 2000);
+           }
+       }
+   }
+
+   simulateRealTimeDeviceStatus() {
+       const devices = this.getState('devices');
+       let hasChanges = false;
+
+       devices.forEach(device => {
+           const updates = {};
+
+           if (device.isOn && device.isOnline) {
+               const hourlyConsumption = this.calculateHourlyConsumption(device);
+               const currentConsumption = device.energyConsumption || 0;
+               updates.energyConsumption = currentConsumption + (hourlyConsumption / 3600);
+           }
+
+           if (device.remainingTime > 0) {
+               updates.remainingTime = Math.max(0, device.remainingTime - 1);
+               
+               if (updates.remainingTime === 0) {
+                   updates.isOn = false;
+                   
+                   this.addNotification({
+                       type: 'success',
+                       title: 'Hẹn giờ hoàn thành',
+                       message: `${device.name} đã tự động tắt theo hẹn giờ`,
+                       icon: device.icon
+                   });
+               }
+           }
+
+           if (device.type === 'towel_dryer' && 
+               device.isOn && 
+               device.mode === 'towel_dry' &&
+               device.currentTemperature >= device.targetTemperature) {
+               
+               updates.isOn = false;
+               this.addNotification({
+                   type: 'success',
+                   title: 'Sấy khăn hoàn thành',
+                   message: `${device.name} đã đạt nhiệt độ mục tiêu và tự động tắt`,
+                   icon: '🧻'
+               });
+           }
+
+           if (Object.keys(updates).length > 0) {
+               this.updateDevice(device.id, updates);
+               hasChanges = true;
+           }
+       });
+
+       return hasChanges;
+   }
+
+   getDeviceBaseConsumption(deviceType) {
+       const baseConsumption = {
+           'light': 0.1,
+           'ac': 2.5,
+           'tv': 0.3,
+           'socket': 0.5,
+           'speaker': 0.1,
+           'camera': 0.05,
+           'lock': 0.01,
+           'sensor': 0.005,
+           'water_heater': 2.5,
+           'towel_dryer': 0.8
+       };
+       
+       return baseConsumption[deviceType] || 0.1;
+   }
+
    // Sample data generation
+   generateBathroomDevices(homeId, bathroomRoomId) {
+       const waterHeater = {
+           id: Utils.generateId(),
+           homeId,
+           roomId: bathroomRoomId,
+           type: 'water_heater',
+           name: 'Bình nóng lạnh Ariston',
+           icon: '🔥',
+           capabilities: ['toggle', 'temperature', 'timer', 'energy_monitoring'],
+           isOn: false,
+           isOnline: true,
+           isFavorite: true,
+           currentTemperature: 25,
+           targetTemperature: 60,
+           maxTemperature: 75,
+           minTemperature: 30,
+           heatingPower: 2500,
+           remainingTime: 0,
+           energyConsumption: 0,
+           mode: 'auto',
+           modes: ['auto', 'eco', 'boost'],
+           firmwareVersion: 'v2.1.0',
+           lastUpdated: new Date().toISOString(),
+           createdAt: new Date().toISOString(),
+           autoShutoff: true,
+           scheduleEnabled: false,
+           schedule: {
+               morning: { enabled: true, time: '06:00', temperature: 60 },
+               evening: { enabled: true, time: '18:00', temperature: 65 }
+           }
+       };
+
+       const towelDryer = {
+           id: Utils.generateId(),
+           homeId,
+           roomId: bathroomRoomId,
+           type: 'towel_dryer',
+           name: 'Máy sấy khăn Xiaomi',
+           icon: '🧻',
+           capabilities: ['toggle', 'temperature', 'mode', 'timer'],
+           isOn: false,
+           isOnline: true,
+           isFavorite: true,
+           currentTemperature: 22,
+           targetTemperature: 45,
+           maxTemperature: 60,
+           minTemperature: 25,
+           heatingPower: 800,
+           mode: 'towel_dry',
+           modes: [
+               { 
+                   id: 'towel_dry', 
+                   name: 'Sấy khăn', 
+                   description: 'Sấy khăn và tự động tắt khi đạt nhiệt độ',
+                   defaultTemp: 45,
+                   autoPowerOff: true
+               },
+               { 
+                   id: 'room_heating', 
+                   name: 'Sưởi phòng', 
+                   description: 'Sưởi phòng liên tục dựa trên nhiệt độ cài đặt',
+                   defaultTemp: 35,
+                   autoPowerOff: false
+               }
+           ],
+           remainingTime: 0,
+           energyConsumption: 0,
+           firmwareVersion: 'v1.5.2',
+           lastUpdated: new Date().toISOString(),
+           createdAt: new Date().toISOString(),
+           roomTemperatureSensor: true,
+           currentRoomTemperature: 22,
+           targetRoomTemperature: 24,
+           smartAutomation: true,
+           linkedDevices: [waterHeater.id]
+       };
+
+       // Link devices
+       waterHeater.linkedDevices = [towelDryer.id];
+
+       return [waterHeater, towelDryer];
+   }
+
    generateSampleDevices(homeId) {
        const rooms = this.getCurrentHome()?.rooms || [];
        const deviceTypes = [
@@ -677,7 +1252,14 @@ updateScene(sceneId, updates) {
        const devices = [];
        
        rooms.forEach(room => {
-           const deviceCount = Math.floor(Math.random() * 4) + 2; // 2-5 devices per room
+           // Add special bathroom devices
+           if (room.type === 'bathroom') {
+               const bathroomDevices = this.generateBathroomDevices(homeId, room.id);
+               devices.push(...bathroomDevices);
+           }
+           
+           // Add regular devices
+           const deviceCount = Math.floor(Math.random() * 3) + 1;
            
            for (let i = 0; i < deviceCount; i++) {
                const deviceType = deviceTypes[Math.floor(Math.random() * deviceTypes.length)];
@@ -690,8 +1272,8 @@ updateScene(sceneId, updates) {
                    icon: deviceType.icon,
                    capabilities: deviceType.capabilities,
                    isOn: Math.random() > 0.5,
-                   isOnline: Math.random() > 0.1, // 90% online rate
-                   isFavorite: Math.random() > 0.8, // 20% favorite rate
+                   isOnline: Math.random() > 0.1,
+                   isFavorite: Math.random() > 0.8,
                    brightness: Math.floor(Math.random() * 100) + 1,
                    temperature: Math.floor(Math.random() * 10) + 20,
                    mode: ['auto', 'cool', 'heat', 'fan'][Math.floor(Math.random() * 4)],
@@ -751,9 +1333,7 @@ updateScene(sceneId, updates) {
        this.setState('notifications', notifications);
    }
 
-   // Initialize sample data
    initializeSampleData() {
-       // Sample user
        this.setUser({
            id: '1',
            name: 'Nguyễn Văn A',
@@ -763,7 +1343,6 @@ updateScene(sceneId, updates) {
            createdAt: new Date().toISOString()
        });
 
-       // Sample home
        const sampleHome = this.addHome({
            name: 'Nhà của Anh',
            address: '123 Đường ABC, Quận 1, TP.HCM',
@@ -777,16 +1356,36 @@ updateScene(sceneId, updates) {
            ]
        });
 
-       // Sample scenes
+       this.addScene({
+           name: 'Tắm nước nóng',
+           icon: '🛁',
+           description: 'Bật bình nóng lạnh và tắt máy sấy khăn',
+           trigger: { type: 'manual' },
+           actions: []
+       });
+
+       this.addScene({
+           name: 'Sấy khăn nhanh',
+           icon: '🧻',
+           description: 'Bật máy sấy khăn chế độ sấy khăn',
+           trigger: { type: 'manual' },
+           actions: []
+       });
+
+       this.addScene({
+           name: 'Sưởi phòng tắm',
+           icon: '🔥',
+           description: 'Bật máy sấy khăn chế độ sưởi phòng',
+           trigger: { type: 'time', value: '06:00' },
+           actions: []
+       });
+
        this.addScene({
            name: 'Về nhà',
            icon: '🏠',
            description: 'Bật đèn và điều hòa khi về nhà',
            trigger: { type: 'time', value: '18:00-20:00' },
-           actions: [
-               { deviceId: 'sample1', type: 'toggle', value: true },
-               { deviceId: 'sample2', type: 'temperature', value: 26 }
-           ]
+           actions: []
        });
 
        this.addScene({
@@ -794,16 +1393,10 @@ updateScene(sceneId, updates) {
            icon: '😴',
            description: 'Tắt tất cả thiết bị không cần thiết',
            trigger: { type: 'time', value: '22:30' },
-           actions: [
-               { deviceId: 'sample1', type: 'toggle', value: false },
-               { deviceId: 'sample3', type: 'toggle', value: false }
-           ]
+           actions: []
        });
 
-       // Sample notifications
        this.generateSampleNotifications();
-
-       // Generate sample analytics data
        this.generateSampleAnalytics();
    }
 
@@ -811,7 +1404,6 @@ updateScene(sceneId, updates) {
        const analytics = {};
        const today = new Date();
        
-       // Generate data for last 30 days
        for (let i = 29; i >= 0; i--) {
            const date = new Date(today);
            date.setDate(date.getDate() - i);
@@ -823,10 +1415,9 @@ updateScene(sceneId, updates) {
                sceneRuns: {}
            };
            
-           // Generate random energy consumption
            this.getState('devices').forEach(device => {
                const baseConsumption = this.getDeviceBaseConsumption(device.type);
-               const variation = Math.random() * 0.5 + 0.75; // 75% - 125% of base
+               const variation = Math.random() * 0.5 + 0.75;
                analytics[dateString].energyConsumption[device.id] = 
                    parseFloat((baseConsumption * variation).toFixed(2));
            });
@@ -834,20 +1425,401 @@ updateScene(sceneId, updates) {
        
        this.setState('analytics', analytics);
    }
+}
 
-   getDeviceBaseConsumption(deviceType) {
-       const baseConsumption = {
-           'light': 0.1,
-           'ac': 2.5,
-           'tv': 0.3,
-           'socket': 0.5,
-           'speaker': 0.1,
-           'camera': 0.05,
-           'lock': 0.01,
-           'sensor': 0.005
-       };
+// Automation Engine
+class AutomationEngine {
+   constructor(dataManager) {
+       this.dataManager = dataManager;
+       this.registeredRules = new Map();
+       this.intervalChecks = new Map();
+       this.init();
+   }
+
+   init() {
+       this.startPeriodicChecks();
+   }
+
+   registerRule(rule) {
+       this.registeredRules.set(rule.id, rule);
        
-       return baseConsumption[deviceType] || 0.1;
+       if (rule.trigger.type === 'device_temperature_check') {
+           this.setupPeriodicCheck(rule);
+       }
+   }
+
+   unregisterRule(ruleId) {
+       this.registeredRules.delete(ruleId);
+       
+       if (this.intervalChecks.has(ruleId)) {
+           clearInterval(this.intervalChecks.get(ruleId));
+           this.intervalChecks.delete(ruleId);
+       }
+   }
+
+   setupPeriodicCheck(rule) {
+       if (this.intervalChecks.has(rule.id)) {
+           clearInterval(this.intervalChecks.get(rule.id));
+       }
+
+       const interval = setInterval(() => {
+           this.processTemperatureCheck(rule);
+       }, rule.trigger.interval || 30000);
+
+       this.intervalChecks.set(rule.id, interval);
+   }
+
+   processDeviceStateChange(deviceId, oldState, newState) {
+       this.registeredRules.forEach(rule => {
+           if (rule.trigger.type === 'device_state_change' && 
+               rule.trigger.deviceId === deviceId &&
+               rule.isActive) {
+               
+               const triggerProperty = rule.trigger.property;
+               const triggerValue = rule.trigger.value;
+               
+               if (newState[triggerProperty] === triggerValue) {
+                   this.executeRule(rule);
+               }
+           }
+       });
+   }
+
+   processTemperatureCheck(rule) {
+       if (!rule.isActive) return;
+
+       const device = this.dataManager.getState('devices').find(d => d.id === rule.trigger.deviceId);
+       if (!device) return;
+
+       if (this.checkConditions(rule.conditions)) {
+           if (rule.trigger.type === 'device_temperature_reached') {
+               if (device.currentTemperature >= device.targetTemperature) {
+                   this.executeRule(rule);
+               }
+           } else if (rule.trigger.type === 'device_temperature_check') {
+               this.executeRule(rule);
+           }
+       }
+   }
+
+   checkConditions(conditions) {
+       return conditions.every(condition => {
+           const device = this.dataManager.getState('devices').find(d => d.id === condition.deviceId);
+           if (!device) return false;
+
+           const actualValue = device[condition.property];
+           const expectedValue = condition.value;
+
+           switch (condition.operator) {
+               case 'equals':
+                   return actualValue === expectedValue;
+               case 'not_equals':
+                   return actualValue !== expectedValue;
+               case 'greater_than':
+                   return actualValue > expectedValue;
+               case 'less_than':
+                   return actualValue < expectedValue;
+               default:
+                   return actualValue === expectedValue;
+           }
+       });
+   }
+
+   executeRule(rule) {
+       console.log(`Executing automation rule: ${rule.name}`);
+
+       rule.actions.forEach(action => {
+           this.executeAction(action);
+       });
+
+       this.dataManager.addNotification({
+           type: 'info',
+           title: 'Automation thực hiện',
+           message: `${rule.name} đã được thực hiện tự động`,
+           icon: '🤖'
+       });
+   }
+
+   executeAction(action) {
+       switch (action.type) {
+           case 'device_control':
+               this.dataManager.updateDevice(action.deviceId, {
+                   [action.property]: action.value
+               });
+               break;
+
+           case 'temperature_control':
+               this.executeTemperatureControl(action);
+               break;
+
+           case 'notification':
+               this.dataManager.addNotification({
+                   type: 'info',
+                   title: action.title,
+                   message: action.message,
+                   icon: action.icon || '🔔'
+               });
+               break;
+       }
+   }
+
+   executeTemperatureControl(action) {
+       const device = this.dataManager.getState('devices').find(d => d.id === action.deviceId);
+       if (!device) return;
+
+       if (action.logic === 'maintain_temperature') {
+           const currentTemp = device.currentRoomTemperature || device.currentTemperature;
+           const targetTemp = device.targetRoomTemperature || device.targetTemperature;
+           const tolerance = 1;
+
+           if (currentTemp < (targetTemp - tolerance)) {
+               if (!device.isOn) {
+                   this.dataManager.updateDevice(action.deviceId, { isOn: true });
+               }
+           } else if (currentTemp > (targetTemp + tolerance)) {
+               if (device.isOn) {
+                   this.dataManager.updateDevice(action.deviceId, { isOn: false });
+               }
+           }
+       }
+   }
+
+   startPeriodicChecks() {
+       setInterval(() => {
+           this.updateDeviceTemperatures();
+       }, 5000);
+
+       setInterval(() => {
+           this.checkAllRules();
+       }, 10000);
+   }
+
+   updateDeviceTemperatures() {
+       const devices = this.dataManager.getState('devices');
+       
+       devices.forEach(device => {
+           if (device.type === 'water_heater' || device.type === 'towel_dryer') {
+               this.simulateTemperatureChange(device);
+           }
+       });
+   }
+
+   simulateTemperatureChange(device) {
+       let newTemp = device.currentTemperature;
+       let roomTemp = device.currentRoomTemperature || 22;
+       
+       if (device.isOn && device.isOnline) {
+           const heatingRate = device.type === 'water_heater' ? 2 : 1.5;
+           const targetTemp = device.targetTemperature;
+           
+           if (newTemp < targetTemp) {
+               newTemp = Math.min(newTemp + (heatingRate / 12), targetTemp);
+           }
+
+           if (device.type === 'towel_dryer' && device.mode === 'room_heating') {
+               const targetRoomTemp = device.targetRoomTemperature || 24;
+               if (roomTemp < targetRoomTemp) {
+                   roomTemp = Math.min(roomTemp + 0.2, targetRoomTemp);
+               }
+           }
+       } else {
+           const coolingRate = 0.5;
+           const ambientTemp = 22;
+           
+           if (newTemp > ambientTemp) {
+               newTemp = Math.max(newTemp - (coolingRate / 12), ambientTemp);
+           }
+
+           if (device.type === 'towel_dryer') {
+               if (roomTemp > 22) {
+                   roomTemp = Math.max(roomTemp - 0.1, 22);
+               }
+           }
+       }
+
+       const updates = {
+           currentTemperature: Math.round(newTemp * 10) / 10,
+           lastUpdated: new Date().toISOString()
+       };
+
+       if (device.type === 'towel_dryer') {
+           updates.currentRoomTemperature = Math.round(roomTemp * 10) / 10;
+       }
+
+       this.dataManager.updateDevice(device.id, updates);
+   }
+
+   checkAllRules() {
+       this.registeredRules.forEach(rule => {
+           if (rule.trigger.type === 'device_temperature_reached') {
+               this.processTemperatureCheck(rule);
+           }
+       });
+   }
+
+   learnUsagePatterns() {
+       const devices = this.dataManager.getState('devices');
+       const analytics = this.dataManager.getState('analytics');
+       
+       devices.forEach(device => {
+           if (device.type === 'water_heater' || device.type === 'towel_dryer') {
+               const usagePattern = this.analyzeDeviceUsagePattern(device.id, analytics);
+               
+               if (usagePattern.confidence > 0.7) {
+                   this.suggestOptimizations(device, usagePattern);
+               }
+           }
+       });
+   }
+
+   analyzeDeviceUsagePattern(deviceId, analytics) {
+       const last7Days = Object.keys(analytics).slice(-7);
+       const hourlyUsage = Array(24).fill(0);
+       let totalUsage = 0;
+       
+       last7Days.forEach(day => {
+           const dayData = analytics[day];
+           if (dayData.deviceActions[deviceId]) {
+               dayData.deviceActions[deviceId].forEach(action => {
+                   const hour = new Date(action.timestamp).getHours();
+                   hourlyUsage[hour]++;
+                   totalUsage++;
+               });
+           }
+       });
+       
+       const peakHours = hourlyUsage
+           .map((usage, hour) => ({ hour, usage }))
+           .filter(item => item.usage > 0)
+           .sort((a, b) => b.usage - a.usage)
+           .slice(0, 3);
+       
+       return {
+           peakHours: peakHours.map(item => item.hour),
+           totalUsage,
+           confidence: totalUsage > 10 ? Math.min(totalUsage / 50, 1) : 0,
+           averageDaily: totalUsage / 7
+       };
+   }
+
+   suggestOptimizations(device, pattern) {
+       const suggestions = [];
+       
+       if (pattern.peakHours.length > 0) {
+           suggestions.push({
+               type: 'schedule_optimization',
+               title: `Tối ưu lịch trình cho ${device.name}`,
+               message: `Phát hiện bạn thường sử dụng vào ${pattern.peakHours.join(', ')}h. Tạo lịch trình tự động?`,
+               action: 'create_smart_schedule',
+               deviceId: device.id,
+               data: { peakHours: pattern.peakHours }
+           });
+       }
+       
+       if (pattern.averageDaily > 5) {
+           suggestions.push({
+               type: 'energy_optimization',
+               title: `Tiết kiệm năng lượng ${device.name}`,
+               message: `Thiết bị được sử dụng ${pattern.averageDaily.toFixed(1)} lần/ngày. Khuyến nghị các cài đặt tiết kiệm năng lượng.`,
+               action: 'optimize_energy_settings',
+               deviceId: device.id
+           });
+       }
+       
+       suggestions.forEach(suggestion => {
+           this.dataManager.addNotification({
+               type: 'info',
+               title: suggestion.title,
+               message: suggestion.message,
+               icon: '💡'
+           });
+       });
+   }
+
+   executeAdvancedTemperatureControl(action) {
+       const device = this.dataManager.getState('devices').find(d => d.id === action.deviceId);
+       if (!device) return;
+
+       switch (device.type) {
+           case 'towel_dryer':
+               this.executeTowelDryerLogic(device, action);
+               break;
+           case 'water_heater':
+               this.executeWaterHeaterLogic(device, action);
+               break;
+       }
+   }
+
+   executeTowelDryerLogic(device, action) {
+       const currentTemp = device.currentRoomTemperature || device.currentTemperature;
+       const targetTemp = device.targetRoomTemperature || device.targetTemperature;
+       
+       if (device.mode === 'room_heating') {
+           const tolerance = 0.5;
+           
+           if (currentTemp < (targetTemp - tolerance)) {
+               if (!device.isOn) {
+                   this.dataManager.updateDevice(device.id, { 
+                       isOn: true,
+                       lastAutoAction: 'auto_turn_on_heating'
+                   });
+                   
+                   this.dataManager.addSmartNotification('automation_executed', device.id, {
+                       message: `Tự động bật sưởi phòng (${currentTemp}°C < ${targetTemp}°C)`
+                   });
+               }
+           } else if (currentTemp > (targetTemp + tolerance)) {
+               if (device.isOn) {
+                   this.dataManager.updateDevice(device.id, { 
+                       isOn: false,
+                       lastAutoAction: 'auto_turn_off_heating'
+                   });
+                   
+                   this.dataManager.addSmartNotification('automation_executed', device.id, {
+                       message: `Tự động tắt sưởi phòng (${currentTemp}°C > ${targetTemp}°C)`
+                   });
+               }
+           }
+       } else if (device.mode === 'towel_dry') {
+           if (device.isOn && device.currentTemperature >= device.targetTemperature) {
+               this.dataManager.updateDevice(device.id, { 
+                   isOn: false,
+                   lastAutoAction: 'auto_turn_off_dry_complete'
+               });
+               
+               this.dataManager.addSmartNotification('temperature_reached', device.id);
+           }
+       }
+   }
+
+   executeWaterHeaterLogic(device, action) {
+       const currentHour = new Date().getHours();
+       
+       if (currentHour >= 22 || currentHour <= 6) {
+           if (device.mode !== 'eco' && device.isOn) {
+               this.dataManager.updateDevice(device.id, { 
+                   mode: 'eco',
+                   targetTemperature: Math.min(device.targetTemperature, 55),
+                   lastAutoAction: 'auto_eco_mode_night'
+               });
+               
+               this.dataManager.addSmartNotification('automation_executed', device.id, {
+                   message: 'Tự động chuyển sang chế độ tiết kiệm điện ban đêm'
+               });
+           }
+       } else if (currentHour >= 6 && currentHour <= 8) {
+           if (device.mode === 'eco') {
+               this.dataManager.updateDevice(device.id, { 
+                   mode: 'auto',
+                   targetTemperature: Math.max(device.targetTemperature, 60),
+                   lastAutoAction: 'auto_morning_boost'
+               });
+               
+               this.dataManager.addSmartNotification('automation_executed', device.id, {
+                   message: 'Tự động chuẩn bị nước nóng buổi sáng'
+               });
+           }
+       }
    }
 }
 

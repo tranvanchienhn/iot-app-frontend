@@ -323,6 +323,8 @@
                         <option value="ac">❄️ Điều hòa</option>
                         <option value="tv">📺 TV</option>
                         <option value="socket">🔌 Ổ cắm</option>
+                        <option value="water_heater">🔥 Bình nóng lạnh</option>
+                        <option value="towel_dryer">🧻 Máy sấy khăn</option>
                     </select>
                 </div>
 
@@ -363,6 +365,7 @@
                 <div class="tabs">
                     <button class="tab active" onclick="showSceneTab('my-scenes')">Kịch bản của tôi</button>
                     <button class="tab" onclick="showSceneTab('ai-suggestions')">Gợi ý AI</button>
+                    <button class="tab" onclick="showSceneTab('automation-rules')">Quy tắc tự động</button>
                 </div>
 
                 <!-- My Scenes Tab -->
@@ -376,6 +379,13 @@
                 <div id="ai-suggestions-tab" class="tab-content">
                     <div class="ai-suggestions" id="ai-suggestions">
                         <!-- AI suggestions will be populated by JS -->
+                    </div>
+                </div>
+
+                <!-- Automation Rules Tab -->
+                <div id="automation-rules-tab" class="tab-content">
+                    <div class="automation-rules-list" id="automation-rules-list">
+                        <!-- Automation rules will be populated by JS -->
                     </div>
                 </div>
             </div>
@@ -515,6 +525,49 @@
                     </div>
 
                     <div class="settings-group">
+                        <h4 class="group-title">Tự động hóa</h4>
+                        <div class="setting-item" onclick="showAutomationRules()">
+                            <span class="material-icons">smart_toy</span>
+                            <span class="setting-label">Quy tắc tự động</span>
+                            <span class="material-icons">chevron_right</span>
+                        </div>
+                        <div class="setting-item" onclick="showSmartSuggestions()">
+                            <span class="material-icons">lightbulb</span>
+                            <span class="setting-label">Gợi ý thông minh</span>
+                            <span class="material-icons">chevron_right</span>
+                        </div>
+                        <div class="setting-item" onclick="showEnergyOptimization()">
+                            <span class="material-icons">eco</span>
+                            <span class="setting-label">Tối ưu hóa năng lượng</span>
+                            <span class="material-icons">chevron_right</span>
+                        </div>
+                        <div class="setting-item" onclick="showDeviceSchedules()">
+                            <span class="material-icons">schedule</span>
+                            <span class="setting-label">Lịch trình thiết bị</span>
+                            <span class="material-icons">chevron_right</span>
+                        </div>
+                    </div>
+
+                    <div class="settings-group">
+                        <h4 class="group-title">Quản lý thiết bị</h4>
+                        <div class="setting-item" onclick="showDeviceHealth()">
+                            <span class="material-icons">health_and_safety</span>
+                            <span class="setting-label">Tình trạng thiết bị</span>
+                            <span class="material-icons">chevron_right</span>
+                        </div>
+                        <div class="setting-item" onclick="showMaintenanceSchedule()">
+                            <span class="material-icons">build</span>
+                            <span class="setting-label">Lịch bảo trì</span>
+                            <span class="material-icons">chevron_right</span>
+                        </div>
+                        <div class="setting-item" onclick="showEnergyReports()">
+                            <span class="material-icons">assessment</span>
+                            <span class="setting-label">Báo cáo năng lượng</span>
+                            <span class="material-icons">chevron_right</span>
+                        </div>
+                    </div>
+
+                    <div class="settings-group">
                         <h4 class="group-title">Tích hợp</h4>
                         <div class="setting-item" onclick="voiceSettings()">
                             <span class="material-icons">mic</span>
@@ -580,68 +633,68 @@
                 </button>
             </div>
             <div class="modal-content" id="device-control-content">
-                <!-- Content will be populated by JS -->
-            </div>
-        </div>
+               <!-- Content will be populated by JS -->
+           </div>
+       </div>
 
-        <!-- Add Device Modal -->
-        <div id="add-device-modal" class="modal">
-            <div class="modal-header">
-                <button class="back-btn" onclick="closeModal()">
-                    <span class="material-icons">arrow_back</span>
-                </button>
-                <h3>Thêm thiết bị mới</h3>
-            </div>
-            <div class="modal-content">
-                <div class="add-device-methods">
-                    <div class="method-card">
-                        <div class="qr-scanner">
-                            <span class="material-icons">qr_code_scanner</span>
-                            <h4>Quét mã QR thiết bị</h4>
-                            <p>Đưa camera về phía mã QR</p>
-                        </div>
-                        <button class="btn btn-primary" onclick="startQRScan()">Bắt đầu quét</button>
-                    </div>
-                    
-                    <div class="divider"><span>HOẶC</span></div>
-                    
-                    <div class="form-group">
-                        <label>Nhập mã thiết bị</label>
-                        <input type="text" placeholder="ABC123DEF456" id="device-code">
-                    </div>
-                    
-                    <div class="divider"><span>HOẶC</span></div>
-                    
-                    <div class="nearby-devices">
-                        <h4>Tìm thiết bị gần đó</h4>
-                        <div class="scanning-status">
-                            <span class="material-icons spin">refresh</span>
-                            <span>Đang quét...</span>
-                        </div>
-                        <div class="nearby-list" id="nearby-devices-list">
-                            <!-- Nearby devices will be populated by JS -->
-                        </div>
-                    </div>
-                    
-                    <button class="btn btn-outline btn-full" onclick="refreshNearbyDevices()">
-                        Làm mới
-                    </button>
-                </div>
-            </div>
-        </div>
+       <!-- Add Device Modal -->
+       <div id="add-device-modal" class="modal">
+           <div class="modal-header">
+               <button class="back-btn" onclick="closeModal()">
+                   <span class="material-icons">arrow_back</span>
+               </button>
+               <h3>Thêm thiết bị mới</h3>
+           </div>
+           <div class="modal-content">
+               <div class="add-device-methods">
+                   <div class="method-card">
+                       <div class="qr-scanner">
+                           <span class="material-icons">qr_code_scanner</span>
+                           <h4>Quét mã QR thiết bị</h4>
+                           <p>Đưa camera về phía mã QR</p>
+                       </div>
+                       <button class="btn btn-primary" onclick="startQRScan()">Bắt đầu quét</button>
+                   </div>
+                   
+                   <div class="divider"><span>HOẶC</span></div>
+                   
+                   <div class="form-group">
+                       <label>Nhập mã thiết bị</label>
+                       <input type="text" placeholder="ABC123DEF456" id="device-code">
+                   </div>
+                   
+                   <div class="divider"><span>HOẶC</span></div>
+                   
+                   <div class="nearby-devices">
+                       <h4>Tìm thiết bị gần đó</h4>
+                       <div class="scanning-status">
+                           <span class="material-icons spin">refresh</span>
+                           <span>Đang quét...</span>
+                       </div>
+                       <div class="nearby-list" id="nearby-devices-list">
+                           <!-- Nearby devices will be populated by JS -->
+                       </div>
+                   </div>
+                   
+                   <button class="btn btn-outline btn-full" onclick="refreshNearbyDevices()">
+                       Làm mới
+                   </button>
+               </div>
+           </div>
+       </div>
 
-        <!-- Notifications Modal -->
-        <div id="notifications-modal" class="modal">
-            <div class="modal-header">
-                <button class="back-btn" onclick="closeModal()">
-                    <span class="material-icons">arrow_back</span>
-                </button>
-                <h3>Thông báo</h3>
-                <div class="header-actions">
-                    <button class="header-btn" onclick="searchNotifications()">
-                        <span class="material-icons">search</span>
-                    </button>
-					<button class="header-btn" onclick="notificationSettings()">
+       <!-- Notifications Modal -->
+       <div id="notifications-modal" class="modal">
+           <div class="modal-header">
+               <button class="back-btn" onclick="closeModal()">
+                   <span class="material-icons">arrow_back</span>
+               </button>
+               <h3>Thông báo</h3>
+               <div class="header-actions">
+                   <button class="header-btn" onclick="searchNotifications()">
+                       <span class="material-icons">search</span>
+                   </button>
+                   <button class="header-btn" onclick="notificationSettings()">
                        <span class="material-icons">settings</span>
                    </button>
                    <button class="header-btn" onclick="clearAllNotifications()">
@@ -655,11 +708,127 @@
                    <button class="filter-btn active" onclick="filterNotifications('all')">Tất cả</button>
                    <button class="filter-btn" onclick="filterNotifications('warning')">⚠️ Cảnh báo</button>
                    <button class="filter-btn" onclick="filterNotifications('info')">ℹ️ Thông tin</button>
+                   <button class="filter-btn" onclick="filterNotifications('success')">✅ Thành công</button>
                </div>
                
                <!-- Notifications List -->
                <div class="notifications-list" id="notifications-list">
                    <!-- Notifications will be populated by JS -->
+               </div>
+           </div>
+       </div>
+
+       <!-- Automation Rules Modal -->
+       <div id="automation-rules-modal" class="modal">
+           <div class="modal-header">
+               <button class="back-btn" onclick="closeModal()">
+                   <span class="material-icons">arrow_back</span>
+               </button>
+               <h3>Quy tắc tự động</h3>
+               <div class="header-actions">
+                   <button class="header-btn" onclick="addAutomationRule()">
+                       <span class="material-icons">add</span>
+                   </button>
+               </div>
+           </div>
+           <div class="modal-content">
+               <div class="automation-rules-list" id="automation-rules-modal-list">
+                   <!-- Automation rules will be populated by JS -->
+               </div>
+           </div>
+       </div>
+
+       <!-- Energy Optimization Modal -->
+       <div id="energy-optimization-modal" class="modal">
+           <div class="modal-header">
+               <button class="back-btn" onclick="closeModal()">
+                   <span class="material-icons">arrow_back</span>
+               </button>
+               <h3>Tối ưu hóa năng lượng</h3>
+           </div>
+           <div class="modal-content">
+               <div class="optimization-summary">
+                   <div class="summary-card">
+                       <span class="material-icons">eco</span>
+                       <div class="summary-info">
+                           <div class="summary-value" id="potential-savings">25%</div>
+                           <div class="summary-label">Tiết kiệm dự kiến</div>
+                       </div>
+                   </div>
+               </div>
+               
+               <div class="optimization-recommendations" id="optimization-recommendations">
+                   <!-- Recommendations will be populated by JS -->
+               </div>
+               
+               <div class="optimization-actions">
+                   <button class="btn btn-primary btn-full" onclick="applyAllOptimizations()">
+                       Áp dụng tất cả tối ưu hóa
+                   </button>
+               </div>
+           </div>
+       </div>
+
+       <!-- Device Timer Modal -->
+       <div id="device-timer-modal" class="modal">
+           <div class="modal-header">
+               <button class="back-btn" onclick="closeModal()">
+                   <span class="material-icons">arrow_back</span>
+               </button>
+               <h3>Hẹn giờ thiết bị</h3>
+           </div>
+           <div class="modal-content">
+               <div class="timer-setup">
+                   <div class="form-group">
+                       <label>Thời gian (phút)</label>
+                       <input type="number" id="timer-minutes" min="1" max="1440" value="30" placeholder="30">
+                   </div>
+                   <div class="form-group">
+                       <label>Hành động khi hết giờ</label>
+                       <select id="timer-action">
+                           <option value="turn_off">Tắt thiết bị</option>
+                           <option value="turn_on">Bật thiết bị</option>
+                           <option value="notify_only">Chỉ thông báo</option>
+                       </select>
+                   </div>
+                   <div class="timer-actions">
+                       <button class="btn btn-primary btn-full" onclick="setDeviceTimerFromModal()">
+                           Đặt hẹn giờ
+                       </button>
+                       <button class="btn btn-outline btn-full" onclick="cancelDeviceTimerFromModal()">
+                           Hủy hẹn giờ
+                       </button>
+                   </div>
+               </div>
+           </div>
+       </div>
+
+       <!-- Device Schedule Modal -->
+       <div id="device-schedule-modal" class="modal">
+           <div class="modal-header">
+               <button class="back-btn" onclick="closeModal()">
+                   <span class="material-icons">arrow_back</span>
+               </button>
+               <h3>Lịch trình thiết bị</h3>
+           </div>
+           <div class="modal-content">
+               <div class="schedule-setup">
+                   <div class="form-group">
+                       <label>Tên lịch trình</label>
+                       <input type="text" id="schedule-name" placeholder="Lịch trình mới">
+                   </div>
+                   <div class="schedule-rules" id="schedule-rules">
+                       <!-- Schedule rules will be added dynamically -->
+                   </div>
+                   <button class="btn btn-outline" onclick="addScheduleRule()">
+                       <span class="material-icons">add</span>
+                       Thêm quy tắc
+                   </button>
+                   <div class="schedule-actions">
+                       <button class="btn btn-primary btn-full" onclick="saveDeviceSchedule()">
+                           Lưu lịch trình
+                       </button>
+                   </div>
                </div>
            </div>
        </div>

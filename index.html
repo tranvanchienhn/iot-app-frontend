@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartHome IoT</title>
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/themes.css">
+    <link rel="stylesheet" href="css/responsive.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <meta name="theme-color" content="#2196F3">
+    <link rel="manifest" href="manifest.json">
+</head>
+<body class="theme-light">
+    <!-- Splash Screen -->
+    <div id="splash-screen" class="splash-screen">
+        <div class="splash-content">
+            <div class="logo">
+                <span class="material-icons">home</span>
+                <h1>SmartHome IoT</h1>
+            </div>
+            <div class="loading">
+                <div class="loading-dots">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+                <p>Đang khởi động...</p>
+            </div>
+            <div class="version">Phiên bản 1.2.3</div>
+        </div>
+    </div>
+
+    <!-- Auth Container -->
+    <div id="auth-container" class="auth-container hidden">
+        <!-- Login Screen -->
+        <div id="login-screen" class="auth-screen active">
+            <div class="auth-header">
+                <button class="back-btn" onclick="goBack()">
+                    <span class="material-icons">arrow_back</span>
+                </button>
+                <h2>Đăng nhập</h2>
+            </div>
+            <div class="auth-content">
+                <div class="logo-section">
+                    <span class="material-icons">home</span>
+                    <h3>Chào mừng trở lại!</h3>
+                </div>
+                <form class="auth-form" onsubmit="handleLogin(event)">
+                    <div class="form-group">
+                        <label>Email hoặc số điện thoại</label>
+                        <input type="text" id="login-email" placeholder="example@email.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Mật khẩu</label>
+                        <div class="password-input">
+                            <input type="password" id="login-password" placeholder="••••••••••" required>
+                            <button type="button" class="toggle-password" onclick="togglePassword('login-password')">
+                                <span class="material-icons">visibility</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="form-options">
+                        <label class="checkbox">
+                            <input type="checkbox" id="remember-me">
+                            <span class="checkmark"></span>
+                            Ghi nhớ đăng nhập
+                        </label>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-full">Đăng nhập</button>
+                </form>
+                <div class="auth-links">
+                    <a href="#" onclick="showScreen('forgot-password')">Quên mật khẩu?</a>
+                </div>
+                <div class="divider">
+                    <span>HOẶC</span>
+                </div>
+                <button class="btn btn-google" onclick="loginWithGoogle()">
+                    <span class="google-icon">G</span>
+                    Đăng nhập với Google
+                </button>
+                <div class="auth-footer">
+                    <p>Chưa có tài khoản? <a href="#" onclick="showScreen('signup')">Đăng ký</a></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sign Up Screen -->
+        <div id="signup-screen" class="auth-screen">
+            <div class="auth-header">
+                <button class="back-btn" onclick="goBack()">
+                    <span class="material-icons">arrow_back</span>
+                </button>
+                <h2>Tạo tài khoản</h2>
+            </div>
+            <div class="auth-content">
+                <form class="auth-form" onsubmit="handleSignup(event)">
+                    <div class="form-group">
+                        <label>Họ và tên</label>
+                        <input type="text" id="signup-name" placeholder="Nguyen Van A" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" id="signup-email" placeholder="example@email.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Số điện thoại</label>
+                        <input type="tel" id="signup-phone" placeholder="+84 901234567" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Mật khẩu</label>
+                        <div class="password-input">
+                            <input type="password" id="signup-password" placeholder="••••••••••" required>
+                            <button type="button" class="toggle-password" onclick="togglePassword('signup-password')">
+                                <span class="material-icons">visibility</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Xác nhận mật khẩu</label>
+                        <div class="password-input">
+                            <input type="password" id="signup-confirm" placeholder="••••••••••" required>
+                            <button type="button" class="toggle-password" onclick="togglePassword('signup-confirm')">
+                                <span class="material-icons">visibility</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="form-options">
+                        <label class="checkbox">
+                            <input type="checkbox" id="agree-terms" required>
+                            <span class="checkmark"></span>
+                            Tôi đồng ý với <a href="#">Điều khoản</a> và <a href="#">Chính sách bảo mật</a>
+                        </label>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-full">Đăng ký</button>
+                </form>
+                <div class="auth-footer">
+                    <p>Đã có tài khoản? <a href="#" onclick="showScreen('login')">Đăng nhập</a></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Forgot Password Screen -->
+        <div id="forgot-password-screen" class="auth-screen">
+            <div class="auth-header">
+                <button class="back-btn" onclick="goBack()">
+                    <span class="material-icons">arrow_back</span>
+                </button>
+                <h2>Quên mật khẩu</h2>
+            </div>
+            <div class="auth-content">
+                <div class="logo-section">
+                    <span class="material-icons">vpn_key</span>
+                    <h3>Khôi phục mật khẩu</h3>
+                    <p>Nhập email hoặc số điện thoại để nhận mã xác nhận khôi phục</p>
+                </div>
+                <form class="auth-form" onsubmit="handleForgotPassword(event)">
+                    <div class="form-group">
+                        <label>Email hoặc số điện thoại</label>
+                        <input type="text" id="forgot-email" placeholder="example@email.com" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-full">Gửi mã xác nhận</button>
+                </form>
+                <div class="auth-footer">
+                    <p><a href="#" onclick="showScreen('login')">Quay lại đăng nhập</a></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- OTP Verification Screen -->
+        <div id="otp-screen" class="auth-screen">
+            <div class="auth-header">
+                <button class="back-btn" onclick="goBack()">
+                    <span class="material-icons">arrow_back</span>
+                </button>
+                <h2>Xác nhận mã OTP</h2>
+            </div>
+            <div class="auth-content">
+                <div class="logo-section">
+                    <span class="material-icons">message</span>
+                    <h3>Nhập mã xác nhận</h3>
+                    <p>Mã OTP đã được gửi đến email<br><strong id="otp-email">example@email.com</strong></p>
+                </div>
+                <form class="auth-form" onsubmit="handleOTP(event)">
+                    <div class="otp-inputs">
+                        <input type="text" maxlength="1" class="otp-input" oninput="moveToNext(this, 0)">
+                        <input type="text" maxlength="1" class="otp-input" oninput="moveToNext(this, 1)">
+                        <input type="text" maxlength="1" class="otp-input" oninput="moveToNext(this, 2)">
+                        <input type="text" maxlength="1" class="otp-input" oninput="moveToNext(this, 3)">
+                        <input type="text" maxlength="1" class="otp-input" oninput="moveToNext(this, 4)">
+                        <input type="text" maxlength="1" class="otp-input" oninput="moveToNext(this, 5)">
+                    </div>
+                    <div class="resend-timer">
+                        <p>Gửi lại mã sau <span id="countdown">00:45</span></p>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-full">Xác nhận</button>
+                </form>
+                <div class="auth-links">
+                    <a href="#" onclick="resendOTP()">Gửi lại mã OTP</a>
+                    <a href="#" onclick="showScreen('forgot-password')">Thay đổi email</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main App Container -->
+    <div id="app-container" class="app-container hidden">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="header-left">
+                <div class="home-selector" onclick="showHomeSelector()">
+                    <span id="current-home-name">Nhà của Anh</span>
+                    <span class="material-icons">keyboard_arrow_down</span>
+                </div>
+            </div>
+            <div class="header-right">
+                <button class="header-btn" onclick="showNotifications()">
+                    <span class="material-icons">notifications</span>
+                    <span class="badge" id="notification-badge">3</span>
+                </button>
+                <button class="header-btn voice-btn" onclick="startVoiceControl()">
+                    <span class="material-icons">mic</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Home Screen -->
+            <div id="home-screen" class="screen active">
+                <!-- Weather Widget -->
+                <div class="weather-widget">
+                    <div class="weather-info">
+                        <span class="weather-icon">☀️</span>
+                        <div class="weather-details">
+                            <div class="temperature">28°C</div>
+                            <div class="location">Hà Nội, Hôm nay</div>
+                            <div class="description">Nắng, gió nhẹ</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Favorite Devices -->
+                <section class="section">
+                    <h3 class="section-title">Thiết bị yêu thích</h3>
+                    <div class="device-grid" id="favorite-devices">
+                        <!-- Devices will be populated by JS -->
+                    </div>
+                </section>
+
+                <!-- Quick Scenes -->
+                <section class="section">
+                    <h3 class="section-title">Kịch bản nhanh</h3>
+                    <div class="scene-grid" id="quick-scenes">
+                        <!-- Scenes will be populated by JS -->
+                    </div>
+                </section>
+
+                <!-- Today's Summary -->
+                <section class="section">
+                    <h3 class="section-title">Hôm nay</h3>
+                    <div class="summary-cards">
+                        <div class="summary-card">
+                            <span class="material-icons">bolt</span>
+                            <div class="summary-info">
+                                <div class="summary-label">Điện năng</div>
+                                <div class="summary-value">45.2 kWh</div>
+                            </div>
+                        </div>
+                        <div class="summary-card">
+                            <span class="material-icons">attach_money</span>
+                            <div class="summary-info">
+                                <div class="summary-label">Chi phí</div>
+                                <div class="summary-value">~135,000 VNĐ</div>
+                            </div>
+                        </div>
+                        <div class="summary-card trend-up">
+                            <span class="material-icons">trending_up</span>
+                            <div class="summary-info">
+                                <div class="summary-label">So với hôm qua</div>
+                                <div class="summary-value">+12%</div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Device List Screen -->
+            <div id="devices-screen" class="screen">
+                <div class="screen-header">
+                    <h2>Thiết bị</h2>
+                    <div class="header-actions">
+                        <button class="header-btn" onclick="showDeviceSearch()">
+                            <span class="material-icons">search</span>
+                        </button>
+                        <button class="header-btn" onclick="showDeviceSettings()">
+                            <span class="material-icons">settings</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Search Bar -->
+                <div class="search-bar" id="device-search" style="display: none;">
+                    <div class="search-input">
+                        <span class="material-icons">search</span>
+                        <input type="text" placeholder="Tìm thiết bị..." oninput="filterDevices(this.value)">
+                    </div>
+                </div>
+
+                <!-- Filter Bar -->
+                <div class="filter-bar">
+                    <select class="filter-select" onchange="filterByRoom(this.value)">
+                        <option value="">📍 Tất cả phòng</option>
+                        <option value="living-room">🛋️ Phòng khách</option>
+                        <option value="bedroom">🛏️ Phòng ngủ</option>
+                        <option value="kitchen">🍳 Nhà bếp</option>
+                        <option value="bathroom">🚿 Phòng tắm</option>
+                    </select>
+                    <select class="filter-select" onchange="filterByType(this.value)">
+                        <option value="">🔧 Tất cả loại</option>
+                        <option value="light">💡 Đèn</option>
+                        <option value="ac">❄️ Điều hòa</option>
+                        <option value="tv">📺 TV</option>
+                        <option value="socket">🔌 Ổ cắm</option>
+                    </select>
+                </div>
+
+                <!-- Device List -->
+                <div class="device-list" id="device-list">
+                    <!-- Devices will be populated by JS -->
+                </div>
+
+                <!-- Add Device Button -->
+                <button class="fab" onclick="showAddDevice()">
+                    <span class="material-icons">add</span>
+                </button>
+            </div>
+
+            <!-- Scenes Screen -->
+            <div id="scenes-screen" class="screen">
+                <div class="screen-header">
+                    <h2>Kịch bản thông minh</h2>
+                    <div class="header-actions">
+                        <button class="header-btn" onclick="showSceneSearch()">
+                            <span class="material-icons">search</span>
+                        </button>
+                        <button class="header-btn" onclick="showAddScene()">
+                            <span class="material-icons">add</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Search Bar -->
+                <div class="search-bar" id="scene-search" style="display: none;">
+                    <div class="search-input">
+                        <span class="material-icons">search</span>
+                        <input type="text" placeholder="Tìm kịch bản..." oninput="filterScenes(this.value)">
+                    </div>
+                </div>
+
+                <!-- Scene Tabs -->
+                <div class="tabs">
+                    <button class="tab active" onclick="showSceneTab('my-scenes')">Kịch bản của tôi</button>
+                    <button class="tab" onclick="showSceneTab('ai-suggestions')">Gợi ý AI</button>
+                </div>
+
+                <!-- My Scenes Tab -->
+                <div id="my-scenes-tab" class="tab-content active">
+                    <div class="scene-list" id="scene-list">
+                        <!-- Scenes will be populated by JS -->
+                    </div>
+                </div>
+
+                <!-- AI Suggestions Tab -->
+                <div id="ai-suggestions-tab" class="tab-content">
+                    <div class="ai-suggestions" id="ai-suggestions">
+                        <!-- AI suggestions will be populated by JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Analytics Screen -->
+            <div id="analytics-screen" class="screen">
+                <div class="screen-header">
+                    <h2>Thống kê điện năng</h2>
+                    <div class="header-actions">
+                        <button class="header-btn" onclick="showAnalyticsChart()">
+                            <span class="material-icons">bar_chart</span>
+                        </button>
+                        <button class="header-btn" onclick="showAnalyticsSettings()">
+                            <span class="material-icons">settings</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Period Selector -->
+                <div class="period-selector">
+                    <button class="period-btn active" onclick="setPeriod('today')">Hôm nay</button>
+                    <button class="period-btn" onclick="setPeriod('week')">Tuần</button>
+                    <button class="period-btn" onclick="setPeriod('month')">Tháng</button>
+                    <button class="period-btn" onclick="setPeriod('year')">Năm</button>
+                </div>
+
+                <!-- Overview Cards -->
+                <div class="analytics-overview">
+                    <div class="analytics-card">
+                        <div class="analytics-icon">⚡</div>
+                        <div class="analytics-info">
+                            <div class="analytics-value">45.2 kWh</div>
+                            <div class="analytics-label">Tổng tiêu thụ</div>
+                        </div>
+                    </div>
+                    <div class="analytics-card">
+                        <div class="analytics-icon">💰</div>
+                        <div class="analytics-info">
+                            <div class="analytics-value">135,000 VNĐ</div>
+                            <div class="analytics-label">Chi phí</div>
+                        </div>
+                    </div>
+                    <div class="analytics-card trend">
+                        <div class="analytics-icon">📈</div>
+                        <div class="analytics-info">
+                            <div class="analytics-value">+12%</div>
+                            <div class="analytics-label">So với hôm qua</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chart Container -->
+                <div class="chart-container">
+                    <canvas id="energy-chart"></canvas>
+                </div>
+
+                <!-- Top Devices -->
+                <section class="section">
+                    <h3 class="section-title">Top thiết bị tiêu thụ</h3>
+                    <div class="top-devices" id="top-devices">
+                        <!-- Top devices will be populated by JS -->
+                    </div>
+                </section>
+
+                <!-- Recommendations -->
+                <section class="section">
+                    <h3 class="section-title">Đề xuất tiết kiệm</h3>
+                    <div class="recommendations" id="recommendations">
+                        <!-- Recommendations will be populated by JS -->
+                    </div>
+                </section>
+            </div>
+
+            <!-- Settings Screen -->
+            <div id="settings-screen" class="screen">
+                <div class="screen-header">
+                    <h2>Cài đặt</h2>
+                </div>
+
+                <!-- Profile Section -->
+                <div class="profile-section">
+                    <div class="profile-info">
+                        <div class="profile-avatar">
+                            <span class="material-icons">person</span>
+                        </div>
+                        <div class="profile-details">
+                            <div class="profile-name">Nguyễn Văn A</div>
+                            <div class="profile-email">user@example.com</div>
+                        </div>
+                    </div>
+                    <button class="btn btn-outline" onclick="editProfile()">Chỉnh sửa hồ sơ</button>
+                </div>
+
+                <!-- Settings Groups -->
+                <div class="settings-groups">
+                    <div class="settings-group">
+                        <h4 class="group-title">Tài khoản</h4>
+                        <div class="setting-item" onclick="changePassword()">
+                            <span class="material-icons">lock</span>
+                            <span class="setting-label">Đổi mật khẩu</span>
+                            <span class="material-icons">chevron_right</span>
+                        </div>
+                        <div class="setting-item" onclick="showSecurity()">
+                            <span class="material-icons">security</span>
+                            <span class="setting-label">Bảo mật 2 lớp</span>
+                            <span class="material-icons">chevron_right</span>
+                        </div>
+                        <div class="setting-item" onclick="showBackup()">
+                            <span class="material-icons">backup</span>
+                            <span class="setting-label">Sao lưu & khôi phục</span>
+                            <span class="material-icons">chevron_right</span>
+                        </div>
+                    </div>
+
+                    <div class="settings-group">
+                        <h4 class="group-title">Hệ thống</h4>
+                        <div class="setting-item" onclick="manageHomes()">
+                            <span class="material-icons">home</span>
+                            <span class="setting-label">Quản lý nhà & phòng</span>
+                            <span class="material-icons">chevron_right</span>
+                        </div>
+                        <div class="setting-item" onclick="notificationSettings()">
+                            <span class="material-icons">notifications</span>
+                            <span class="setting-label">Cài đặt thông báo</span>
+                            <span class="material-icons">chevron_right</span>
+                        </div>
+                        <div class="setting-item" onclick="themeSettings()">
+                            <span class="material-icons">palette</span>
+                            <span class="setting-label">Giao diện sáng/tối</span>
+                            <span class="material-icons">chevron_right</span>
+                        </div>
+                        <div class="setting-item" onclick="languageSettings()">
+                            <span class="material-icons">language</span>
+                            <span class="setting-label">Ngôn ngữ</span>
+                            <span class="material-icons">chevron_right</span>
+                        </div>
+                    </div>
+
+                    <div class="settings-group">
+                        <h4 class="group-title">Tích hợp</h4>
+                        <div class="setting-item" onclick="voiceSettings()">
+                            <span class="material-icons">mic</span>
+                            <span class="setting-label">Điều khiển giọng nói</span>
+                            <span class="material-icons">chevron_right</span>
+                        </div>
+                        <div class="setting-item" onclick="otaSettings()">
+                            <span class="material-icons">system_update</span>
+                            <span class="setting-label">Cập nhật OTA</span>
+                            <span class="material-icons">chevron_right</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Logout Button -->
+                <button class="btn btn-danger btn-full logout-btn" onclick="logout()">
+                    Đăng xuất
+                </button>
+
+                <!-- Version Info -->
+                <div class="version-info">
+                    Phiên bản 1.2.3 (Build 456)
+                </div>
+            </div>
+        </main>
+
+        <!-- Bottom Navigation -->
+        <nav class="bottom-nav">
+            <button class="nav-item active" onclick="showScreen('home')">
+                <span class="material-icons">home</span>
+                <span class="nav-label">Trang chủ</span>
+            </button>
+            <button class="nav-item" onclick="showScreen('devices')">
+                <span class="material-icons">devices</span>
+                <span class="nav-label">Thiết bị</span>
+            </button>
+            <button class="nav-item" onclick="showScreen('scenes')">
+                <span class="material-icons">movie</span>
+                <span class="nav-label">Kịch bản</span>
+            </button>
+            <button class="nav-item" onclick="showScreen('analytics')">
+                <span class="material-icons">analytics</span>
+                <span class="nav-label">Thống kê</span>
+            </button>
+            <button class="nav-item" onclick="showScreen('settings')">
+                <span class="material-icons">settings</span>
+                <span class="nav-label">Cài đặt</span>
+            </button>
+        </nav>
+    </div>
+
+    <!-- Modals and Overlays -->
+    <div id="modal-overlay" class="modal-overlay">
+        <!-- Device Control Modal -->
+        <div id="device-control-modal" class="modal">
+            <div class="modal-header">
+                <button class="back-btn" onclick="closeModal()">
+                    <span class="material-icons">arrow_back</span>
+                </button>
+                <h3 id="device-control-title">Điều khiển thiết bị</h3>
+                <button class="header-btn" onclick="showDeviceSettings()">
+                    <span class="material-icons">settings</span>
+                </button>
+            </div>
+            <div class="modal-content" id="device-control-content">
+                <!-- Content will be populated by JS -->
+            </div>
+        </div>
+
+        <!-- Add Device Modal -->
+        <div id="add-device-modal" class="modal">
+            <div class="modal-header">
+                <button class="back-btn" onclick="closeModal()">
+                    <span class="material-icons">arrow_back</span>
+                </button>
+                <h3>Thêm thiết bị mới</h3>
+            </div>
+            <div class="modal-content">
+                <div class="add-device-methods">
+                    <div class="method-card">
+                        <div class="qr-scanner">
+                            <span class="material-icons">qr_code_scanner</span>
+                            <h4>Quét mã QR thiết bị</h4>
+                            <p>Đưa camera về phía mã QR</p>
+                        </div>
+                        <button class="btn btn-primary" onclick="startQRScan()">Bắt đầu quét</button>
+                    </div>
+                    
+                    <div class="divider"><span>HOẶC</span></div>
+                    
+                    <div class="form-group">
+                        <label>Nhập mã thiết bị</label>
+                        <input type="text" placeholder="ABC123DEF456" id="device-code">
+                    </div>
+                    
+                    <div class="divider"><span>HOẶC</span></div>
+                    
+                    <div class="nearby-devices">
+                        <h4>Tìm thiết bị gần đó</h4>
+                        <div class="scanning-status">
+                            <span class="material-icons spin">refresh</span>
+                            <span>Đang quét...</span>
+                        </div>
+                        <div class="nearby-list" id="nearby-devices-list">
+                            <!-- Nearby devices will be populated by JS -->
+                        </div>
+                    </div>
+                    
+                    <button class="btn btn-outline btn-full" onclick="refreshNearbyDevices()">
+                        Làm mới
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Notifications Modal -->
+        <div id="notifications-modal" class="modal">
+            <div class="modal-header">
+                <button class="back-btn" onclick="closeModal()">
+                    <span class="material-icons">arrow_back</span>
+                </button>
+                <h3>Thông báo</h3>
+                <div class="header-actions">
+                    <button class="header-btn" onclick="searchNotifications()">
+                        <span class="material-icons">search</span>
+                    </button>
+					<button class="header-btn" onclick="notificationSettings()">
+                       <span class="material-icons">settings</span>
+                   </button>
+                   <button class="header-btn" onclick="clearAllNotifications()">
+                       <span class="material-icons">delete</span>
+                   </button>
+               </div>
+           </div>
+           <div class="modal-content">
+               <!-- Notification Filters -->
+               <div class="notification-filters">
+                   <button class="filter-btn active" onclick="filterNotifications('all')">Tất cả</button>
+                   <button class="filter-btn" onclick="filterNotifications('warning')">⚠️ Cảnh báo</button>
+                   <button class="filter-btn" onclick="filterNotifications('info')">ℹ️ Thông tin</button>
+               </div>
+               
+               <!-- Notifications List -->
+               <div class="notifications-list" id="notifications-list">
+                   <!-- Notifications will be populated by JS -->
+               </div>
+           </div>
+       </div>
+
+       <!-- Loading Modal -->
+       <div id="loading-modal" class="modal loading-modal">
+           <div class="loading-content">
+               <div class="spinner"></div>
+               <p id="loading-text">Đang xử lý...</p>
+           </div>
+       </div>
+
+       <!-- Confirmation Modal -->
+       <div id="confirmation-modal" class="modal confirmation-modal">
+           <div class="modal-content">
+               <div class="confirmation-icon">
+                   <span class="material-icons" id="confirmation-icon">warning</span>
+               </div>
+               <h3 id="confirmation-title">Xác nhận</h3>
+               <p id="confirmation-message">Bạn có chắc chắn muốn thực hiện hành động này?</p>
+               <div class="confirmation-actions">
+                   <button class="btn btn-outline" onclick="closeModal()">Hủy bỏ</button>
+                   <button class="btn btn-primary" id="confirmation-confirm" onclick="confirmAction()">Xác nhận</button>
+               </div>
+           </div>
+       </div>
+   </div>
+
+   <!-- Toast Notifications -->
+   <div id="toast-container" class="toast-container"></div>
+
+   <!-- Voice Control Overlay -->
+   <div id="voice-overlay" class="voice-overlay">
+       <div class="voice-content">
+           <div class="voice-animation">
+               <div class="voice-circle"></div>
+               <div class="voice-circle"></div>
+               <div class="voice-circle"></div>
+           </div>
+           <h3>Đang nghe...</h3>
+           <p id="voice-transcript">Hãy nói lệnh của bạn</p>
+           <button class="btn btn-outline" onclick="stopVoiceControl()">Dừng</button>
+       </div>
+   </div>
+
+   <!-- PWA Install Prompt -->
+   <div id="install-prompt" class="install-prompt">
+       <div class="install-content">
+           <span class="material-icons">get_app</span>
+           <div class="install-text">
+               <h4>Cài đặt SmartHome IoT</h4>
+               <p>Truy cập nhanh hơn từ màn hình chính</p>
+           </div>
+           <button class="btn btn-primary btn-sm" onclick="installPWA()">Cài đặt</button>
+           <button class="btn btn-text btn-sm" onclick="dismissInstall()">Bỏ qua</button>
+       </div>
+   </div>
+
+   <!-- Scripts -->
+   <script src="js/utils.js"></script>
+   <script src="js/data.js"></script>
+   <script src="js/components.js"></script>
+   <script src="js/app.js"></script>
+</body>
+</html>

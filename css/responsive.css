@@ -1,0 +1,224 @@
+/* Mobile First Approach */
+
+/* Extra Small Devices (< 576px) */
+@media (max-width: 575.98px) {
+    .device-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .scene-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .summary-cards {
+        grid-template-columns: 1fr;
+    }
+    
+    .analytics-overview {
+        grid-template-columns: 1fr;
+    }
+    
+    .quick-actions {
+        grid-template-columns: 1fr;
+    }
+    
+    .color-control {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .auth-content {
+        padding: var(--spacing-md);
+    }
+    
+    .modal {
+        max-width: 100%;
+        border-radius: 0;
+    }
+    
+    .filter-bar {
+        flex-direction: column;
+    }
+}
+
+/* Small Devices (576px - 767.98px) */
+@media (min-width: 576px) and (max-width: 767.98px) {
+    .device-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+    
+    .scene-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .summary-cards {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .analytics-overview {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .quick-actions {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* Medium Devices (768px - 991.98px) */
+@media (min-width: 768px) and (max-width: 991.98px) {
+    .device-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+    
+    .scene-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+    
+    .summary-cards {
+        grid-template-columns: repeat(3, 1fr);
+    }
+    
+    .analytics-overview {
+        grid-template-columns: repeat(3, 1fr);
+    }
+    
+    .main-content {
+        padding: var(--spacing-lg);
+    }
+    
+    .screen {
+        padding: var(--spacing-lg);
+    }
+}
+
+/* Large Devices (992px - 1199.98px) */
+@media (min-width: 992px) {
+    .app-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        box-shadow: var(--shadow-lg);
+    }
+    
+    .device-grid {
+        grid-template-columns: repeat(5, 1fr);
+    }
+    
+    .scene-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+    
+    .summary-cards {
+        grid-template-columns: repeat(4, 1fr);
+    }
+    
+    .analytics-overview {
+        grid-template-columns: repeat(4, 1fr);
+    }
+    
+    .main-content {
+        padding: var(--spacing-xl);
+    }
+    
+    .screen {
+        padding: var(--spacing-xl);
+    }
+    
+    .modal {
+        max-width: 600px;
+        border-radius: var(--radius-lg);
+    }
+    
+    .modal-overlay {
+        align-items: center;
+    }
+}
+
+/* Extra Large Devices (>= 1200px) */
+@media (min-width: 1200px) {
+    .device-grid {
+        grid-template-columns: repeat(6, 1fr);
+    }
+    
+    .scene-grid {
+        grid-template-columns: repeat(5, 1fr);
+    }
+    
+    .chart-container {
+        height: 300px;
+    }
+}
+
+/* Landscape Orientation */
+@media (orientation: landscape) and (max-height: 500px) {
+    .splash-screen .splash-content {
+        transform: scale(0.8);
+    }
+    
+    .auth-content {
+        padding: var(--spacing-sm) var(--spacing-md);
+    }
+    
+    .weather-widget {
+        padding: var(--spacing-md);
+    }
+    
+    .section {
+        margin-bottom: var(--spacing-lg);
+    }
+}
+
+/* Print Styles */
+@media print {
+    .splash-screen,
+    .auth-container,
+    .app-header,
+    .bottom-nav,
+    .fab,
+    .modal-overlay,
+    .toast-container,
+    .voice-overlay,
+    .install-prompt {
+        display: none !important;
+    }
+    
+    .main-content {
+        padding: 0;
+        margin: 0;
+    }
+    
+    .screen {
+        display: block !important;
+    }
+    
+    .device-card,
+    .scene-card,
+    .analytics-card {
+        break-inside: avoid;
+    }
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+    
+    .loading-dots span,
+    .voice-circle,
+    .spinner {
+        animation: none !important;
+    }
+}
+
+/* High DPI Displays */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+    .device-icon,
+    .scene-icon,
+    .analytics-icon {
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+    }
+}

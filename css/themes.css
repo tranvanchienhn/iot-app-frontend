@@ -1,0 +1,138 @@
+/* Dark Theme Variables */
+.theme-dark {
+    /* Background Colors */
+    --bg-primary: #121212;
+    --bg-secondary: #1E1E1E;
+    --bg-tertiary: #2D2D2D;
+    --bg-modal: rgba(0, 0, 0, 0.7);
+    
+    /* Text Colors */
+    --text-primary: #FFFFFF;
+    --text-secondary: #B3B3B3;
+    --text-tertiary: #666666;
+    --text-inverse: #000000;
+    
+    /* Border Colors */
+    --border-light: #333333;
+    --border-medium: #555555;
+    --border-dark: #777777;
+}
+
+/* Theme-specific Component Styles */
+.theme-dark .splash-screen {
+    background: linear-gradient(135deg, #1A1A1A, #0D47A1);
+}
+
+.theme-dark .weather-widget {
+    background: linear-gradient(135deg, #263238, #37474F);
+}
+
+.theme-dark .auth-screen {
+    background: var(--bg-primary);
+}
+
+.theme-dark .modal {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-light);
+}
+
+.theme-dark .device-card,
+.theme-dark .scene-card,
+.theme-dark .summary-card,
+.theme-dark .analytics-card,
+.theme-dark .notification-item,
+.theme-dark .scene-item {
+    background: var(--bg-secondary);
+    border-color: var(--border-light);
+}
+
+.theme-dark .device-card:hover,
+.theme-dark .scene-card:hover {
+    background: var(--bg-tertiary);
+}
+
+.theme-dark .bottom-nav,
+.theme-dark .app-header {
+    background: var(--bg-secondary);
+    border-color: var(--border-light);
+}
+
+.theme-dark .search-input input,
+.theme-dark .form-group input,
+.theme-dark .filter-select {
+    background: var(--bg-secondary);
+    border-color: var(--border-light);
+    color: var(--text-primary);
+}
+
+.theme-dark .tabs {
+    border-bottom-color: var(--border-light);
+}
+
+.theme-dark .period-selector {
+    background: var(--bg-tertiary);
+}
+
+.theme-dark .period-btn.active {
+    background: var(--bg-primary);
+}
+
+.theme-dark .settings-group {
+    background: var(--bg-secondary);
+    border-color: var(--border-light);
+}
+
+.theme-dark .group-title {
+    background: var(--bg-tertiary);
+}
+
+.theme-dark .setting-item:hover {
+    background: var(--bg-tertiary);
+}
+
+.theme-dark .toast {
+    background: var(--bg-secondary);
+    border-color: var(--border-light);
+}
+
+/* High Contrast Theme */
+.theme-high-contrast {
+    --primary: #0066CC;
+    --bg-primary: #FFFFFF;
+    --bg-secondary: #F0F0F0;
+    --text-primary: #000000;
+    --text-secondary: #333333;
+    --border-light: #000000;
+    --border-medium: #333333;
+}
+
+.theme-high-contrast * {
+    border-width: 2px !important;
+}
+
+.theme-high-contrast .btn {
+    border: 2px solid currentColor !important;
+}
+
+/* Auto Theme (System Preference) */
+@media (prefers-color-scheme: dark) {
+    .theme-auto {
+        /* Apply dark theme variables */
+        --bg-primary: #121212;
+        --bg-secondary: #1E1E1E;
+        --bg-tertiary: #2D2D2D;
+        --bg-modal: rgba(0, 0, 0, 0.7);
+        --text-primary: #FFFFFF;
+        --text-secondary: #B3B3B3;
+        --text-tertiary: #666666;
+        --text-inverse: #000000;
+        --border-light: #333333;
+        --border-medium: #555555;
+        --border-dark: #777777;
+    }
+}
+
+/* Theme Transition */
+* {
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}

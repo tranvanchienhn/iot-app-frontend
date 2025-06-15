@@ -892,5 +892,867 @@
    <script src="js/data.js"></script>
    <script src="js/components.js"></script>
    <script src="js/app.js"></script>
+ <!-- Edit Profile Modal -->
+<div id="edit-profile-modal" class="modal">
+    <div class="modal-header">
+        <button class="back-btn" onclick="closeModal()">
+            <span class="material-icons">arrow_back</span>
+        </button>
+        <h3>Chỉnh sửa hồ sơ</h3>
+    </div>
+    <div class="modal-content">
+        <div class="form-group">
+            <label>Họ và tên</label>
+            <input type="text" id="edit-name" placeholder="Nguyễn Văn A">
+        </div>
+        <div class="form-group">
+            <label>Email</label>
+            <input type="email" id="edit-email" placeholder="user@example.com">
+        </div>
+        <div class="form-group">
+            <label>Số điện thoại</label>
+            <input type="tel" id="edit-phone" placeholder="+84901234567">
+        </div>
+        <div class="form-group">
+            <label>Ảnh đại diện</label>
+            <input type="file" id="edit-avatar" accept="image/*">
+        </div>
+        <button class="btn btn-primary btn-full" onclick="saveProfile()">Lưu thay đổi</button>
+    </div>
+</div>
+
+<!-- Change Password Modal -->
+<div id="change-password-modal" class="modal">
+    <div class="modal-header">
+        <button class="back-btn" onclick="closeModal()">
+            <span class="material-icons">arrow_back</span>
+        </button>
+        <h3>Đổi mật khẩu</h3>
+    </div>
+    <div class="modal-content">
+        <div class="form-group">
+            <label>Mật khẩu hiện tại</label>
+            <div class="password-input">
+                <input type="password" id="current-password" placeholder="••••••••••">
+                <button type="button" class="toggle-password" onclick="togglePassword('current-password')">
+                    <span class="material-icons">visibility</span>
+                </button>
+            </div>
+        </div>
+        <div class="form-group">
+            <label>Mật khẩu mới</label>
+            <div class="password-input">
+                <input type="password" id="new-password" placeholder="••••••••••">
+                <button type="button" class="toggle-password" onclick="togglePassword('new-password')">
+                    <span class="material-icons">visibility</span>
+                </button>
+            </div>
+        </div>
+        <div class="form-group">
+            <label>Xác nhận mật khẩu mới</label>
+            <div class="password-input">
+                <input type="password" id="confirm-password" placeholder="••••••••••">
+                <button type="button" class="toggle-password" onclick="togglePassword('confirm-password')">
+                    <span class="material-icons">visibility</span>
+                </button>
+            </div>
+        </div>
+        <button class="btn btn-primary btn-full" onclick="changePasswordSubmit()">Đổi mật khẩu</button>
+    </div>
+</div>
+
+<!-- Theme Settings Modal -->
+<div id="theme-settings-modal" class="modal">
+    <div class="modal-header">
+        <button class="back-btn" onclick="closeModal()">
+            <span class="material-icons">arrow_back</span>
+        </button>
+        <h3>Cài đặt giao diện</h3>
+    </div>
+    <div class="modal-content">
+        <div class="theme-options">
+            <div class="theme-option" onclick="setTheme('light')">
+                <div class="theme-preview theme-preview-light"></div>
+                <div class="theme-info">
+                    <h4>Sáng</h4>
+                    <p>Giao diện sáng, dễ nhìn ban ngày</p>
+                </div>
+                <span class="material-icons theme-check">check_circle</span>
+            </div>
+            
+            <div class="theme-option" onclick="setTheme('dark')">
+                <div class="theme-preview theme-preview-dark"></div>
+                <div class="theme-info">
+                    <h4>Tối</h4>
+                    <p>Giao diện tối, dễ chịu cho mắt</p>
+                </div>
+                <span class="material-icons theme-check">check_circle</span>
+            </div>
+            
+            <div class="theme-option" onclick="setTheme('auto')">
+                <div class="theme-preview theme-preview-auto"></div>
+                <div class="theme-info">
+                    <h4>Tự động</h4>
+                    <p>Theo cài đặt hệ thống</p>
+                </div>
+                <span class="material-icons theme-check">check_circle</span>
+            </div>
+            
+            <div class="theme-option" onclick="setTheme('high-contrast')">
+                <div class="theme-preview theme-preview-contrast"></div>
+                <div class="theme-info">
+                    <h4>Tương phản cao</h4>
+                    <p>Dễ nhìn hơn cho người khiếm thị</p>
+                </div>
+                <span class="material-icons theme-check">check_circle</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Language Settings Modal -->
+<div id="language-settings-modal" class="modal">
+    <div class="modal-header">
+        <button class="back-btn" onclick="closeModal()">
+            <span class="material-icons">arrow_back</span>
+        </button>
+        <h3>Cài đặt ngôn ngữ</h3>
+    </div>
+    <div class="modal-content">
+        <div class="language-options">
+            <div class="language-option" onclick="setLanguage('vi')">
+                <span class="language-flag">🇻🇳</span>
+                <div class="language-info">
+                    <h4>Tiếng Việt</h4>
+                    <p>Vietnamese</p>
+                </div>
+                <span class="material-icons language-check">check_circle</span>
+            </div>
+            
+            <div class="language-option" onclick="setLanguage('en')">
+                <span class="language-flag">🇺🇸</span>
+                <div class="language-info">
+                    <h4>English</h4>
+                    <p>English (US)</p>
+                </div>
+                <span class="material-icons language-check">check_circle</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Notification Settings Modal -->
+<div id="notification-settings-modal" class="modal">
+    <div class="modal-header">
+        <button class="back-btn" onclick="closeModal()">
+            <span class="material-icons">arrow_back</span>
+        </button>
+        <h3>Cài đặt thông báo</h3>
+    </div>
+    <div class="modal-content">
+        <div class="notification-settings">
+            <div class="setting-group">
+                <h4>Loại thông báo</h4>
+                
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <div class="setting-label">Cảnh báo thiết bị</div>
+                        <div class="setting-desc">Thông báo khi thiết bị offline hoặc lỗi</div>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" checked onchange="updateNotificationSetting('warnings', this.checked)">
+                        <span class="slider-switch"></span>
+                    </label>
+                </div>
+                
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <div class="setting-label">Kịch bản</div>
+                        <div class="setting-desc">Thông báo khi kịch bản được thực hiện</div>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" checked onchange="updateNotificationSetting('scenes', this.checked)">
+                        <span class="slider-switch"></span>
+                    </label>
+                </div>
+                
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <div class="setting-label">Cập nhật</div>
+                        <div class="setting-desc">Thông báo về cập nhật ứng dụng và firmware</div>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" checked onchange="updateNotificationSetting('updates', this.checked)">
+                        <span class="slider-switch"></span>
+                    </label>
+                </div>
+                
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <div class="setting-label">Gợi ý thông minh</div>
+                        <div class="setting-desc">Gợi ý tối ưu hóa từ AI</div>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" checked onchange="updateNotificationSetting('suggestions', this.checked)">
+                        <span class="slider-switch"></span>
+                    </label>
+                </div>
+            </div>
+            
+            <div class="setting-group">
+                <h4>Giờ im lặng</h4>
+                
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <div class="setting-label">Bật giờ im lặng</div>
+                        <div class="setting-desc">Tắt thông báo trong khoảng thời gian này</div>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" checked>
+                        <span class="slider-switch"></span>
+                    </label>
+                </div>
+                
+                <div class="time-range">
+                    <div class="form-group">
+                        <label>Từ</label>
+                        <input type="time" value="22:00">
+                    </div>
+                    <div class="form-group">
+                        <label>Đến</label>
+                        <input type="time" value="07:00">
+                   </div>
+               </div>
+           </div>
+       </div>
+   </div>
+</div>
+
+<!-- Voice Settings Modal -->
+<div id="voice-settings-modal" class="modal">
+   <div class="modal-header">
+       <button class="back-btn" onclick="closeModal()">
+           <span class="material-icons">arrow_back</span>
+       </button>
+       <h3>Cài đặt giọng nói</h3>
+   </div>
+   <div class="modal-content">
+       <div class="voice-settings">
+           <div class="setting-group">
+               <h4>Nhận dạng giọng nói</h4>
+               
+               <div class="setting-item">
+                   <div class="setting-info">
+                       <div class="setting-label">Bật điều khiển giọng nói</div>
+                   </div>
+                   <label class="switch">
+                       <input type="checkbox" checked onchange="updateVoiceSetting('enabled', this.checked)">
+                       <span class="slider-switch"></span>
+                   </label>
+               </div>
+               
+               <div class="form-group">
+                   <label>Độ nhạy</label>
+                   <select onchange="updateVoiceSetting('sensitivity', this.value)">
+                       <option value="low">Thấp</option>
+                       <option value="medium" selected>Trung bình</option>
+                       <option value="high">Cao</option>
+                   </select>
+               </div>
+               
+               <div class="form-group">
+                   <label>Ngôn ngữ nhận dạng</label>
+                   <select onchange="updateVoiceSetting('language', this.value)">
+                       <option value="vi-VN" selected>Tiếng Việt</option>
+                       <option value="en-US">English (US)</option>
+                   </select>
+               </div>
+               
+               <div class="form-group">
+                   <label>Thời gian chờ (giây)</label>
+                   <input type="range" min="3" max="10" value="5" 
+                          oninput="updateVoiceSetting('timeout', this.value * 1000)">
+                   <span>5 giây</span>
+               </div>
+           </div>
+           
+           <div class="setting-group">
+               <h4>Phản hồi giọng nói</h4>
+               
+               <div class="setting-item">
+                   <div class="setting-info">
+                       <div class="setting-label">Tắt tiếng phản hồi</div>
+                   </div>
+                   <label class="switch">
+                       <input type="checkbox" onchange="updateVoiceSetting('muteResponse', this.checked)">
+                       <span class="slider-switch"></span>
+                   </label>
+               </div>
+               
+               <div class="form-group">
+                   <label>Giọng phản hồi</label>
+                   <select onchange="updateVoiceSetting('responseVoice', this.value)">
+                       <option value="female" selected>Nữ</option>
+                       <option value="male">Nam</option>
+                   </select>
+               </div>
+           </div>
+           
+           <div class="voice-test">
+               <button class="btn btn-outline btn-full" onclick="testVoiceRecognition()">
+                   <span class="material-icons">mic</span>
+                   Kiểm tra nhận dạng giọng nói
+               </button>
+           </div>
+       </div>
+   </div>
+</div>
+
+<!-- OTA Settings Modal -->
+<div id="ota-settings-modal" class="modal">
+   <div class="modal-header">
+       <button class="back-btn" onclick="closeModal()">
+           <span class="material-icons">arrow_back</span>
+       </button>
+       <h3>Cập nhật OTA</h3>
+   </div>
+   <div class="modal-content">
+       <div class="ota-settings">
+           <div class="current-version">
+               <div class="version-info">
+                   <h4>Phiên bản hiện tại</h4>
+                   <p class="version-number">v1.2.3 (Build 456)</p>
+                   <p class="version-date">Cập nhật: 15/06/2025</p>
+               </div>
+               <button class="btn btn-primary" onclick="checkForUpdates()">
+                   Kiểm tra cập nhật
+               </button>
+           </div>
+           
+           <div class="auto-update-settings">
+               <div class="setting-item">
+                   <div class="setting-info">
+                       <div class="setting-label">Tự động cập nhật ứng dụng</div>
+                       <div class="setting-desc">Tự động tải và cài đặt bản cập nhật mới</div>
+                   </div>
+                   <label class="switch">
+                       <input type="checkbox" checked>
+                       <span class="slider-switch"></span>
+                   </label>
+               </div>
+               
+               <div class="setting-item">
+                   <div class="setting-info">
+                       <div class="setting-label">Tự động cập nhật thiết bị</div>
+                       <div class="setting-desc">Tự động cập nhật firmware cho thiết bị</div>
+                   </div>
+                   <label class="switch">
+                       <input type="checkbox" checked>
+                       <span class="slider-switch"></span>
+                   </label>
+               </div>
+               
+               <div class="setting-item">
+                   <div class="setting-info">
+                       <div class="setting-label">Chỉ qua WiFi</div>
+                       <div class="setting-desc">Chỉ tải cập nhật khi kết nối WiFi</div>
+                   </div>
+                   <label class="switch">
+                       <input type="checkbox" checked>
+                       <span class="slider-switch"></span>
+                   </label>
+               </div>
+               
+               <div class="setting-item">
+                   <div class="setting-info">
+                       <div class="setting-label">Khi đang sạc</div>
+                       <div class="setting-desc">Chỉ cập nhật khi thiết bị đang sạc</div>
+                   </div>
+                   <label class="switch">
+                       <input type="checkbox">
+                       <span class="slider-switch"></span>
+                   </label>
+               </div>
+           </div>
+           
+           <div class="update-history">
+               <h4>Lịch sử cập nhật</h4>
+               <div class="history-list">
+                   <div class="history-item">
+                       <div class="history-info">
+                           <div class="history-version">v1.2.3</div>
+                           <div class="history-date">15/06/2025</div>
+                       </div>
+                       <div class="history-desc">Cải thiện hiệu suất và sửa lỗi</div>
+                   </div>
+                   <div class="history-item">
+                       <div class="history-info">
+                           <div class="history-version">v1.2.2</div>
+                           <div class="history-date">01/06/2025</div>
+                       </div>
+                       <div class="history-desc">Thêm tính năng điều khiển giọng nói</div>
+                   </div>
+               </div>
+           </div>
+       </div>
+   </div>
+</div>
+
+<!-- Manage Homes Modal -->
+<div id="manage-homes-modal" class="modal">
+   <div class="modal-header">
+       <button class="back-btn" onclick="closeModal()">
+           <span class="material-icons">arrow_back</span>
+       </button>
+       <h3>Quản lý nhà & phòng</h3>
+       <button class="header-btn" onclick="addNewHome()">
+           <span class="material-icons">add</span>
+       </button>
+   </div>
+   <div class="modal-content" id="manage-homes-content">
+       <!-- Content will be populated by JS -->
+   </div>
+</div>
+
+<!-- Add Home Modal -->
+<div id="add-home-modal" class="modal">
+   <div class="modal-header">
+       <button class="back-btn" onclick="closeModal()">
+           <span class="material-icons">arrow_back</span>
+       </button>
+       <h3>Thêm nhà mới</h3>
+   </div>
+   <div class="modal-content">
+       <div class="form-group">
+           <label>Tên nhà</label>
+           <input type="text" id="home-name" placeholder="Nhà của tôi">
+       </div>
+       <div class="form-group">
+           <label>Địa chỉ</label>
+           <input type="text" id="home-address" placeholder="123 Đường ABC, Quận 1, TP.HCM">
+       </div>
+       <div class="form-group">
+           <label>Mô tả</label>
+           <textarea id="home-description" placeholder="Mô tả về ngôi nhà"></textarea>
+       </div>
+       <button class="btn btn-primary btn-full" onclick="saveNewHome()">Thêm nhà</button>
+   </div>
+</div>
+
+<!-- QR Scanner Modal -->
+<div id="qr-scanner-modal" class="modal">
+   <div class="modal-header">
+       <button class="back-btn" onclick="closeModal()">
+           <span class="material-icons">arrow_back</span>
+       </button>
+       <h3>Quét mã QR</h3>
+   </div>
+   <div class="modal-content">
+       <div class="qr-scanner-container">
+           <video id="qr-video" autoplay></video>
+           <div class="qr-overlay">
+               <div class="qr-frame"></div>
+               <p>Đưa camera về phía mã QR thiết bị</p>
+           </div>
+       </div>
+   </div>
+</div>
+
+<!-- Add Scene Modal -->
+<div id="add-scene-modal" class="modal">
+   <div class="modal-header">
+       <button class="back-btn" onclick="closeModal()">
+           <span class="material-icons">arrow_back</span>
+       </button>
+       <h3>Tạo kịch bản mới</h3>
+   </div>
+   <div class="modal-content">
+       <div class="scene-builder">
+           <div class="form-group">
+               <label>Tên kịch bản</label>
+               <input type="text" id="scene-name" placeholder="Về nhà">
+           </div>
+           
+           <div class="form-group">
+               <label>Biểu tượng</label>
+               <div class="icon-selector">
+                   <input type="radio" name="scene-icon" value="🏠" id="icon-home" checked>
+                   <label for="icon-home">🏠</label>
+                   
+                   <input type="radio" name="scene-icon" value="😴" id="icon-sleep">
+                   <label for="icon-sleep">😴</label>
+                   
+                   <input type="radio" name="scene-icon" value="🌅" id="icon-morning">
+                   <label for="icon-morning">🌅</label>
+                   
+                   <input type="radio" name="scene-icon" value="🌙" id="icon-night">
+                   <label for="icon-night">🌙</label>
+                   
+                   <input type="radio" name="scene-icon" value="🎬" id="icon-movie">
+                   <label for="icon-movie">🎬</label>
+                   
+                   <input type="radio" name="scene-icon" value="🛁" id="icon-bath">
+                   <label for="icon-bath">🛁</label>
+               </div>
+           </div>
+           
+           <div class="form-group">
+               <label>Mô tả</label>
+               <textarea id="scene-description" placeholder="Mô tả kịch bản"></textarea>
+           </div>
+           
+           <div class="scene-devices">
+               <h4>Chọn thiết bị</h4>
+               <div id="scene-device-list">
+                   <!-- Devices will be populated by JS -->
+               </div>
+           </div>
+           
+           <button class="btn btn-primary btn-full" onclick="saveNewScene()">Tạo kịch bản</button>
+       </div>
+   </div>
+</div>
+
+<!-- Analytics Chart Modal -->
+<div id="analytics-chart-modal" class="modal">
+   <div class="modal-header">
+       <button class="back-btn" onclick="closeModal()">
+           <span class="material-icons">arrow_back</span>
+       </button>
+       <h3>Biểu đồ chi tiết</h3>
+       <div class="header-actions">
+           <button class="header-btn" onclick="exportChart()">
+               <span class="material-icons">download</span>
+           </button>
+       </div>
+   </div>
+   <div class="modal-content">
+       <div class="chart-controls">
+           <select id="chart-type" onchange="updateChartType()">
+               <option value="line">Biểu đồ đường</option>
+               <option value="bar">Biểu đồ cột</option>
+               <option value="pie">Biểu đồ tròn</option>
+           </select>
+           
+           <select id="chart-period" onchange="updateChartPeriod()">
+               <option value="today">Hôm nay</option>
+               <option value="week" selected>Tuần này</option>
+               <option value="month">Tháng này</option>
+               <option value="year">Năm này</option>
+           </select>
+       </div>
+       
+       <div class="detailed-chart-container">
+           <canvas id="detailed-chart" width="400" height="300"></canvas>
+       </div>
+       
+       <div class="chart-legend">
+           <div class="legend-item">
+               <span class="legend-color" style="background: #2196F3;"></span>
+               <span>Tổng tiêu thụ</span>
+           </div>
+           <div class="legend-item">
+               <span class="legend-color" style="background: #4CAF50;"></span>
+               <span>Tiết kiệm</span>
+           </div>
+           <div class="legend-item">
+               <span class="legend-color" style="background: #FF9800;"></span>
+               <span>Cao điểm</span>
+           </div>
+       </div>
+   </div>
+</div>
+
+<!-- Analytics Settings Modal -->
+<div id="analytics-settings-modal" class="modal">
+   <div class="modal-header">
+       <button class="back-btn" onclick="closeModal()">
+           <span class="material-icons">arrow_back</span>
+       </button>
+       <h3>Cài đặt thống kê</h3>
+   </div>
+   <div class="modal-content">
+       <div class="analytics-settings">
+           <div class="setting-group">
+               <h4>Giá điện</h4>
+               
+               <div class="form-group">
+                   <label>Giá điện (VNĐ/kWh)</label>
+                   <input type="number" id="electricity-cost" value="3000" min="1000" max="10000" step="100">
+               </div>
+               
+               <div class="form-group">
+                   <label>Đơn vị tiền tệ</label>
+                   <select id="currency">
+                       <option value="VND" selected>VNĐ (Việt Nam Đồng)</option>
+                       <option value="USD">USD (US Dollar)</option>
+                   </select>
+               </div>
+           </div>
+           
+           <div class="setting-group">
+               <h4>Cảnh báo</h4>
+               
+               <div class="form-group">
+                   <label>Ngưỡng cảnh báo (%)</label>
+                   <input type="range" id="alert-threshold" min="100" max="200" value="150" 
+                          oninput="document.getElementById('threshold-value').textContent = this.value + '%'">
+                   <span id="threshold-value">150%</span>
+                   <small>Cảnh báo khi tiêu thụ vượt quá % so với trung bình</small>
+               </div>
+               
+               <div class="form-group">
+                   <label>Mục tiêu tiết kiệm (%)</label>
+                   <input type="range" id="savings-goal" min="5" max="50" value="20"
+                          oninput="document.getElementById('savings-value').textContent = this.value + '%'">
+                   <span id="savings-value">20%</span>
+               </div>
+           </div>
+           
+           <div class="setting-group">
+               <h4>Báo cáo</h4>
+               
+               <div class="setting-item">
+                   <div class="setting-info">
+                       <div class="setting-label">Báo cáo hàng tuần</div>
+                       <div class="setting-desc">Gửi báo cáo tổng kết qua email</div>
+                   </div>
+                   <label class="switch">
+                       <input type="checkbox" checked>
+                       <span class="slider-switch"></span>
+                   </label>
+               </div>
+               
+               <div class="setting-item">
+                   <div class="setting-info">
+                       <div class="setting-label">Báo cáo hàng tháng</div>
+                       <div class="setting-desc">Báo cáo chi tiết cuối tháng</div>
+                   </div>
+                   <label class="switch">
+                       <input type="checkbox" checked>
+                       <span class="slider-switch"></span>
+                   </label>
+               </div>
+           </div>
+           
+           <button class="btn btn-primary btn-full" onclick="saveAnalyticsSettings()">Lưu cài đặt</button>
+       </div>
+   </div>
+</div>
+
+<!-- Device Settings Modal -->
+<div id="device-settings-modal" class="modal">
+   <div class="modal-header">
+       <button class="back-btn" onclick="closeModal()">
+           <span class="material-icons">arrow_back</span>
+       </button>
+       <h3>Cài đặt thiết bị</h3>
+   </div>
+   <div class="modal-content">
+       <div class="device-settings">
+           <div class="setting-group">
+               <h4>Kết nối</h4>
+               
+               <div class="form-group">
+                   <label>Thời gian chờ kết nối (giây)</label>
+                   <input type="range" min="5" max="30" value="10">
+                   <span>10 giây</span>
+               </div>
+               
+               <div class="setting-item">
+                   <div class="setting-info">
+                       <div class="setting-label">Tự động kết nối lại</div>
+                       <div class="setting-desc">Tự động thử kết nối lại khi mất kết nối</div>
+                   </div>
+                   <label class="switch">
+                       <input type="checkbox" checked>
+                       <span class="slider-switch"></span>
+                   </label>
+               </div>
+           </div>
+           
+           <div class="setting-group">
+               <h4>Hiển thị</h4>
+               
+               <div class="setting-item">
+                   <div class="setting-info">
+                       <div class="setting-label">Hiển thị thiết bị offline</div>
+                   </div>
+                   <label class="switch">
+                       <input type="checkbox" checked>
+                       <span class="slider-switch"></span>
+                   </label>
+               </div>
+               
+               <div class="setting-item">
+                   <div class="setting-info">
+                       <div class="setting-label">Nhóm theo phòng</div>
+                   </div>
+                   <label class="switch">
+                       <input type="checkbox" checked>
+                       <span class="slider-switch"></span>
+                   </label>
+               </div>
+           </div>
+           
+           <div class="device-actions">
+               <button class="btn btn-outline btn-full" onclick="scanForDevices()">
+                   <span class="material-icons">refresh</span>
+                   Quét thiết bị mới
+               </button>
+               
+               <button class="btn btn-outline btn-full" onclick="resetAllDevices()">
+                   <span class="material-icons">settings_backup_restore</span>
+                   Đặt lại tất cả thiết bị
+               </button>
+           </div>
+       </div>
+   </div>
+</div>
+
+<!-- Automation Rule Builder Modal -->
+<div id="automation-rule-builder-modal" class="modal">
+   <div class="modal-header">
+       <button class="back-btn" onclick="closeModal()">
+           <span class="material-icons">arrow_back</span>
+       </button>
+       <h3>Tạo quy tắc tự động</h3>
+   </div>
+   <div class="modal-content" id="rule-builder-content">
+       <!-- Content will be populated by JS -->
+   </div>
+</div>
+
+<!-- Security Settings Modal -->
+<div id="security-settings-modal" class="modal">
+   <div class="modal-header">
+       <button class="back-btn" onclick="closeModal()">
+           <span class="material-icons">arrow_back</span>
+       </button>
+       <h3>Bảo mật 2 lớp</h3>
+   </div>
+   <div class="modal-content">
+       <div class="security-settings">
+           <div class="setting-item">
+               <div class="setting-info">
+                   <div class="setting-label">Bật xác thực 2 lớp</div>
+                   <div class="setting-desc">Sử dụng SMS hoặc app xác thực</div>
+               </div>
+               <label class="switch">
+                   <input type="checkbox" onchange="toggle2FA(this.checked)">
+                   <span class="slider-switch"></span>
+               </label>
+           </div>
+           
+           <div class="setting-item">
+               <div class="setting-info">
+                   <div class="setting-label">Khóa ứng dụng</div>
+                   <div class="setting-desc">Yêu cầu PIN hoặc vân tay khi mở app</div>
+               </div>
+               <label class="switch">
+                   <input type="checkbox" onchange="toggleAppLock(this.checked)">
+                   <span class="slider-switch"></span>
+               </label>
+           </div>
+           
+           <div class="session-management">
+               <h4>Quản lý phiên đăng nhập</h4>
+               <div class="session-list">
+                   <div class="session-item">
+                       <div class="session-info">
+                           <div class="session-device">iPhone 15 Pro</div>
+                           <div class="session-location">Hà Nội, Việt Nam</div>
+                           <div class="session-time">Đang hoạt động</div>
+                       </div>
+                       <span class="session-current">Hiện tại</span>
+                   </div>
+               </div>
+               
+               <button class="btn btn-outline btn-full" onclick="logoutAllDevices()">
+                   Đăng xuất tất cả thiết bị
+               </button>
+           </div>
+       </div>
+   </div>
+</div>
+
+<!-- Backup & Restore Modal -->
+<div id="backup-restore-modal" class="modal">
+   <div class="modal-header">
+       <button class="back-btn" onclick="closeModal()">
+           <span class="material-icons">arrow_back</span>
+       </button>
+       <h3>Sao lưu & khôi phục</h3>
+   </div>
+   <div class="modal-content">
+       <div class="backup-settings">
+           <div class="backup-status">
+               <div class="status-info">
+                   <h4>Sao lưu gần nhất</h4>
+                   <p>15/06/2025, 14:30</p>
+                   <span class="status-success">Thành công</span>
+               </div>
+               <button class="btn btn-primary" onclick="createBackup()">
+                   Sao lưu ngay
+               </button>
+           </div>
+           
+           <div class="setting-item">
+               <div class="setting-info">
+                   <div class="setting-label">Tự động sao lưu</div>
+                   <div class="setting-desc">Sao lưu hàng ngày lên cloud</div>
+               </div>
+               <label class="switch">
+                   <input type="checkbox" checked>
+                   <span class="slider-switch"></span>
+               </label>
+           </div>
+           
+           <div class="backup-options">
+               <h4>Dữ liệu sao lưu</h4>
+               
+               <div class="backup-item">
+                   <label class="checkbox">
+                       <input type="checkbox" checked>
+                       <span class="checkmark"></span>
+                       Cài đặt thiết bị
+                   </label>
+               </div>
+               
+               <div class="backup-item">
+                   <label class="checkbox">
+                       <input type="checkbox" checked>
+                       <span class="checkmark"></span>
+                       Kịch bản & quy tắc
+                   </label>
+               </div>
+               
+               <div class="backup-item">
+                   <label class="checkbox">
+                       <input type="checkbox" checked>
+                       <span class="checkmark"></span>
+                       Dữ liệu thống kê
+                   </label>
+               </div>
+               
+               <div class="backup-item">
+                   <label class="checkbox">
+                       <input type="checkbox">
+                       <span class="checkmark"></span>
+                       Lịch sử thông báo
+                   </label>
+               </div>
+           </div>
+           
+           <div class="restore-section">
+               <h4>Khôi phục</h4>
+               <input type="file" id="restore-file" accept=".json" style="display: none;">
+               <button class="btn btn-outline btn-full" onclick="selectRestoreFile()">
+                   Chọn file sao lưu
+               </button>
+           </div>
+       </div>
+   </div>
+</div>
 </body>
 </html>
